@@ -1,10 +1,70 @@
-import Image from 'next/image'
-import { Inter } from 'next/font/google'
-import styles from './page.module.css'
+"use client";
+import Image from "next/image";
+import { Inter } from "next/font/google";
+import styles from "./page.module.css";
+import { useEffect } from "react";
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ subsets: ["latin"] });
+
+function getUserID(): string {
+  const userID = localStorage.getItem("userID");
+  if (userID) {
+    return userID;
+  }
+  const newUserID = generateUserID();
+  localStorage.setItem("userID", newUserID);
+  return newUserID;
+}
+
+function generateUserID(): string {
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
+    /[xy]/g,
+    (character) => {
+      const hex = 16;
+      const random = (Math.random() * hex) | 0;
+      // eslint-disable-next-line no-magic-numbers
+      const value = character === "x" ? random : (random & 0x3) | 0x8;
+      return value.toString(hex);
+    }
+  );
+}
 
 export default function Home() {
+  useEffect(() => {
+    const userID = getUserID();
+
+    function requestBot(): void {
+      const url = new URL("http://localhost:3000/api/create-bot");
+      const params = [["id", `${userID}`]];
+      url.search = new URLSearchParams(params).toString();
+      console.log("Request");
+      fetch(url, { method: "GET" })
+        .then((response) => response.json())
+        .then((data) => {
+          try {
+            console.log(JSON.parse(data));
+          } catch (err) {
+            console.log(data);
+          }
+        });
+    }
+
+    function destroyBot(): void {
+      const url = new URL("http://localhost:3000/api/destroy-bot");
+      const params = [["id", `${userID}`]];
+      url.search = new URLSearchParams(params).toString();
+      fetch(url)
+        .then((response) => console.log(response))
+        .then((text) => console.log(text));
+    }
+
+    requestBot();
+    window.addEventListener("beforeunload", () => destroyBot());
+    return () => {
+      destroyBot();
+    };
+  }, []);
+
   return (
     <main className={styles.main}>
       <div className={styles.description}>
@@ -18,7 +78,7 @@ export default function Home() {
             target="_blank"
             rel="noopener noreferrer"
           >
-            By{' '}
+            By{" "}
             <Image
               src="/vercel.svg"
               alt="Vercel Logo"
@@ -87,5 +147,5 @@ export default function Home() {
         </a>
       </div>
     </main>
-  )
+  );
 }
