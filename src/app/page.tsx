@@ -1,5 +1,5 @@
 "use client";
-import { ResponseBody as BotData } from "./api/create-bot/route";
+import { ResponseBody as BotData } from "./api/get-bot/route";
 import { Inter } from "next/font/google";
 import styles from "./page.module.css";
 import { ChangeEvent, KeyboardEvent, useEffect, useState } from "react";
@@ -48,7 +48,7 @@ export default function Home() {
 
   useEffect(() => {
     function requestBot(): void {
-      const url = new URL("http://localhost:3000/api/create-bot");
+      const url = new URL("http://localhost:3000/api/get-bot");
       const params = [["id", `${userID}`]];
       url.search = new URLSearchParams(params).toString();
       fetch(url, { method: "GET" })
@@ -64,6 +64,7 @@ export default function Home() {
           current_personality: new Personality(data.current_personality),
         };
         setBotData(botData);
+        console.log(botData);
         const bot = new Chatbot({
           personality: botData.current_personality,
           team: botData.current_team,
@@ -108,10 +109,8 @@ export default function Home() {
   function addMessage(messageData: Message): void {
     const allMessages: Array<Message> = [...botData.messages, messageData];
     const newBotData: BotData = { ...botData, messages: [...allMessages] };
-    console.log(newBotData);
     botData.messages = allMessages;
     setBotData(newBotData);
-    setTimeout(() => console.log(botData), 100);
   }
 
   return (
@@ -123,8 +122,21 @@ export default function Home() {
         </div>
         <div className={styles.messagesContainer}>
           <div className={styles.messagesContent}>
-            {botData.messages.map((infoMessage, index) => {
-              return <span key={index}>{infoMessage.content}</span>;
+            {botData.messages.map(({ type, content }, index) => {
+              return (
+                <div
+                  className={`${styles.messageSpace} ${
+                    type === "sent"
+                      ? styles.messageSpaceSent
+                      : styles.messageSpaceReceived
+                  }`}
+                  key={index}
+                >
+                  <div className={styles.message}>
+                    <span>{content}</span>
+                  </div>
+                </div>
+              );
             })}
           </div>
         </div>

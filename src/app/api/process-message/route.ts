@@ -67,7 +67,7 @@ async function requestPromptToOpenAI(prompt: string): Promise<string> {
     model: "text-davinci-003",
     prompt,
     max_tokens: 2048,
-    temperature: 0.8,
+    temperature: 0.3,
   });
   return response.data.choices[0].text ?? "No response from API";
 }

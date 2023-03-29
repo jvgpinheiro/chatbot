@@ -7,6 +7,7 @@ export const enum TraitsEnum {
   BITTER = 6,
   FRUSTRATED = 7,
   HELPFUL = 8,
+  CONFIDENT = 9,
 }
 
 export type Trait = {
@@ -55,6 +56,11 @@ const excitedTrait: Readonly<Trait> = Object.freeze({
   description: "excited with the team",
   category: "neutral",
 });
+const confidentTrait: Readonly<Trait> = Object.freeze({
+  id: TraitsEnum.HELPFUL,
+  description: "confident in the team",
+  category: "neutral",
+});
 
 export const traitsByID = new Map<TraitsEnum, Trait>([
   [TraitsEnum.POLITE, politeTrait],
@@ -65,10 +71,11 @@ export const traitsByID = new Map<TraitsEnum, Trait>([
   [TraitsEnum.BITTER, bitterTrait],
   [TraitsEnum.FRUSTRATED, frustratedTrait],
   [TraitsEnum.EXCITED, excitedTrait],
+  [TraitsEnum.CONFIDENT, confidentTrait],
 ]);
 
 export const allTraits = Object.freeze({
   goodTraits: [politeTrait, funnyTrait, helpfulTrait],
   badTraits: [cockyTrait, braggyTrait, bitterTrait],
-  neutralTraits: [frustratedTrait, excitedTrait],
+  neutralTraits: [frustratedTrait, excitedTrait, confidentTrait],
 });
