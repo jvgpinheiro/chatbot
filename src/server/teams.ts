@@ -18,7 +18,7 @@ const teams = new Map<string, Team>([
   ["7", { id: "7", name: "Corinthians", primaryColor: "", secondaryColor: "" }],
   ["8", { id: "8", name: "Coritiba", primaryColor: "", secondaryColor: "" }],
   ["9", { id: "9", name: "Cruzeiro", primaryColor: "", secondaryColor: "" }],
-  ["10", { id: "1", name: "Cuiabá", primaryColor: "", secondaryColor: "" }],
+  ["10", { id: "10", name: "Cuiabá", primaryColor: "", secondaryColor: "" }],
   ["11", { id: "11", name: "Flamengo", primaryColor: "", secondaryColor: "" }],
   [
     "12",

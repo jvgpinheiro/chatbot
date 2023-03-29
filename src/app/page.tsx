@@ -6,6 +6,7 @@ import { ChangeEvent, KeyboardEvent, useEffect, useState } from "react";
 import Personality from "@/server/personality";
 import Chatbot from "@/server/chatbot";
 import { Message } from "@/data/databaseManager";
+import Image from "next/image";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -33,11 +34,11 @@ function generateUserID(): string {
 }
 
 export default function Home() {
-  const userID = getUserID();
   const initialBot = new Chatbot({
     personality: Personality.DEFAULT_PERSONALITY,
   });
 
+  const [userID, setUserID] = useState<string>("");
   const [botData, setBotData] = useState<BotData>({
     available_traits: Personality.FULL_PERSONALITY,
     current_personality: Personality.DEFAULT_PERSONALITY,
@@ -45,6 +46,11 @@ export default function Home() {
   });
   const [bot, setBot] = useState<Chatbot>(new Chatbot(initialBot));
   const [message, setMessage] = useState("");
+  const [teamId, setTeamId] = useState<string | undefined>();
+
+  useEffect(() => {
+    setUserID(getUserID());
+  }, []);
 
   useEffect(() => {
     function requestBot(): void {
@@ -70,12 +76,15 @@ export default function Home() {
           team: botData.current_team,
         });
         setBot(bot);
+        console.log(bot.team?.id);
+        setTeamId(bot.team?.id);
       } catch (err) {
         // Ignore
       }
     }
 
     requestBot();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userID]);
 
   function handleInputChange(event: ChangeEvent<HTMLInputElement>): void {
@@ -117,8 +126,25 @@ export default function Home() {
     <main className={styles.main}>
       <div className={styles.chat}>
         <div className={styles.header}>
-          <span>BI</span>
-          <span>{`${bot.getTeamDescription()}bot`}</span>
+          <div className={styles.info}>
+            <Image
+              className={styles.botIcon}
+              src="/chatbot.png"
+              alt="chatbot-icon"
+              width={30}
+              height={30}
+            ></Image>
+            <span>Futebot</span>
+            <Image
+              className={`${styles.teamIcon} ${
+                teamId ? `team_${teamId}` : styles.hidden
+              }`}
+              src={`/teams/team_${teamId ?? 999}.png`}
+              alt="team-icon"
+              width={30}
+              height={30}
+            ></Image>
+          </div>
         </div>
         <div className={styles.messagesContainer}>
           <div className={styles.messagesContent}>
