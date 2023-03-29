@@ -1,11 +1,9 @@
-import { getOrCreateInstance, Instance } from "@/server/stores/instances";
 import { getTeamByID, Team } from "@/server/teams";
 import url from "url";
-import fs from "fs";
-import path from "path";
 import Personality from "@/server/personality";
 import {
   databaseManager,
+  Message,
   UserBaseConfig,
   UserConfig,
 } from "@/data/databaseManager";
@@ -15,6 +13,7 @@ type ResponseBody = {
   available_traits: Personality;
   current_personality: Personality;
   current_team?: Team;
+  messages: Array<Message>;
 };
 
 export async function GET(request: Request) {
@@ -86,6 +85,7 @@ function buildResponseData(data: UserConfig): ResponseBody {
   const json: ResponseBody = {
     available_traits: Personality.FULL_PERSONALITY,
     current_personality: personality,
+    messages: data.messages,
   };
   if (team) {
     json.current_team = team;

@@ -1,10 +1,11 @@
 import initialDB from "./db.json";
 import fs from "fs";
 
+export type Message = { type: "sent" | "received"; content: string };
 export type UserBaseConfig = {
   personality_traits: Array<string>;
   team_id: string;
-  messages: Array<{ type: "sent" | "received"; content: string }>;
+  messages: Array<Message>;
 };
 export type UserConfig = UserBaseConfig & {
   id: string;

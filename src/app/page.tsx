@@ -48,18 +48,7 @@ export default function Home() {
         });
     }
 
-    function destroyBot(): void {
-      const url = new URL("http://localhost:3000/api/destroy-bot");
-      const params = [["id", `${userID}`]];
-      url.search = new URLSearchParams(params).toString();
-      fetch(url)
-        .then((response) => console.log(response))
-        .then((text) => console.log(text));
-    }
-
     requestBot();
-    window.addEventListener("beforeunload", () => destroyBot());
-    return () => destroyBot();
   }, []);
 
   return (
