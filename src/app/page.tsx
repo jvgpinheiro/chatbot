@@ -37,7 +37,6 @@ export default function Home() {
       const url = new URL("http://localhost:3000/api/create-bot");
       const params = [["id", `${userID}`]];
       url.search = new URLSearchParams(params).toString();
-      console.log("Request");
       fetch(url, { method: "GET" })
         .then((response) => response.json())
         .then((data) => {
@@ -60,9 +59,7 @@ export default function Home() {
 
     requestBot();
     window.addEventListener("beforeunload", () => destroyBot());
-    return () => {
-      destroyBot();
-    };
+    return () => destroyBot();
   }, []);
 
   return (

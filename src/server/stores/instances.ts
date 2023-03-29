@@ -1,10 +1,7 @@
 import Chatbot from "../chatbot";
-import {
-  makePersonalityFromTraits,
-  Personality,
-  TraitsEnum,
-} from "../personalities";
+import { TraitsEnum } from "../traits";
 import { getTeamByID, Team } from "../teams";
+import Personality from "../personality";
 
 export type ConfigurableData = {
   personality_traits?: Array<TraitsEnum>;
@@ -16,8 +13,6 @@ export type Instance = {
   bot: Chatbot;
 };
 const storedInstances = new Map<string, Instance>();
-console.log("Root: ");
-console.log(storedInstances);
 
 export function getInstance(id: string): Instance | undefined {
   return storedInstances.get(id);
@@ -26,16 +21,14 @@ export function getInstance(id: string): Instance | undefined {
 export function getOrCreateInstance(id: string): Instance {
   const instance = getInstance(id) ?? buildInstance(id);
   storedInstances.set(id, instance);
-  console.log(id);
-  console.log(storedInstances);
   return instance;
 }
 
 function buildInstance(id: string): Instance {
-  const defaultPersonality: Personality = Object.freeze({
-    good: [],
-    bad: [],
-    neutral: [],
+  const defaultPersonality = new Personality({
+    goodTraits: [],
+    badTraits: [],
+    neutralTraits: [],
   });
   const botData = { personality: defaultPersonality };
   return { id, bot: new Chatbot(botData) };
@@ -46,8 +39,6 @@ export function updateBotConfiguration(
   configurableData: ConfigurableData
 ): { success: boolean; error?: string } {
   const instance = getInstance(id);
-  console.log(id);
-  console.log(storedInstances);
   if (!instance) {
     return { success: false, error: "Invalid id. Bot not found" };
   }
@@ -70,7 +61,7 @@ function updateBotTeamOrPersonality(
   const { personality_traits, team_id } = configurableData;
   const team = team_id ? getTeamByID(team_id) : null;
   const personality = personality_traits
-    ? makePersonalityFromTraits(personality_traits)
+    ? Personality.fromTraitsList(personality_traits)
     : null;
   personality && bot.updatePersonality(personality);
   team && bot.updateTeam(team);

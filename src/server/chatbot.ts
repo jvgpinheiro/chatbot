@@ -1,5 +1,6 @@
-import { Trait, Personality } from "./personalities";
+import { Trait } from "./traits";
 import { Team } from "./teams";
+import Personality from "./personality";
 
 type ConstructorArgs = { personality: Readonly<Personality>; team?: Team };
 
@@ -29,11 +30,11 @@ export default class Chatbot {
   }
 
   private getDescription(): string {
-    const { good, bad, neutral } = this.personality;
-    const hasGoodTraits = this.personality.good.length > 0;
-    const goodTraitsText = this.getTraitsDescription(good);
-    const badTraitsText = this.getTraitsDescription(bad);
-    const neutralTraitsText = this.getTraitsDescription(neutral);
+    const { goodTraits, badTraits, neutralTraits } = this.personality;
+    const hasGoodTraits = goodTraits.length > 0;
+    const goodTraitsText = this.getTraitsDescription(goodTraits);
+    const badTraitsText = this.getTraitsDescription(badTraits);
+    const neutralTraitsText = this.getTraitsDescription(neutralTraits);
     const supportedTeamText = this.getTeamDescription();
     const nonNeutralTraitsText = hasGoodTraits ? goodTraitsText : badTraitsText;
     return `${nonNeutralTraitsText} ${supportedTeamText} ${neutralTraitsText}`;

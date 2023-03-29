@@ -15,12 +15,6 @@ export type Trait = {
   category: "good" | "bad" | "neutral";
 };
 
-export type Personality = {
-  good: Array<Trait>;
-  bad: Array<Trait>;
-  neutral: Array<Trait>;
-};
-
 const politeTrait: Readonly<Trait> = Object.freeze({
   id: TraitsEnum.POLITE,
   description: "polite",
@@ -62,7 +56,7 @@ const excitedTrait: Readonly<Trait> = Object.freeze({
   category: "neutral",
 });
 
-const traitsByID = new Map<TraitsEnum, Trait>([
+export const traitsByID = new Map<TraitsEnum, Trait>([
   [TraitsEnum.POLITE, politeTrait],
   [TraitsEnum.FUNNY, funnyTrait],
   [TraitsEnum.HELPFUL, helpfulTrait],
@@ -73,27 +67,8 @@ const traitsByID = new Map<TraitsEnum, Trait>([
   [TraitsEnum.EXCITED, excitedTrait],
 ]);
 
-const personalities: Personality = Object.freeze({
-  good: [politeTrait, funnyTrait, helpfulTrait],
-  bad: [cockyTrait, braggyTrait, bitterTrait],
-  neutral: [frustratedTrait, excitedTrait],
+export const allTraits = Object.freeze({
+  goodTraits: [politeTrait, funnyTrait, helpfulTrait],
+  badTraits: [cockyTrait, braggyTrait, bitterTrait],
+  neutralTraits: [frustratedTrait, excitedTrait],
 });
-
-export function makePersonalityFromTraits(
-  traitIds: Array<TraitsEnum>
-): Personality {
-  const traits = traitIds
-    .map((id) => traitsByID.get(id))
-    .filter((trait) => !!trait) as Array<Trait>;
-
-  const personality: Personality = {
-    good: [],
-    bad: [],
-    neutral: [],
-  };
-  traits.forEach((trait) => personality[trait.category].push(trait));
-
-  return personality;
-}
-
-export default personalities;
