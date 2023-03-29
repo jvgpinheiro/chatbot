@@ -35,7 +35,9 @@ async function answerRequest(body: RequestBody): Promise<Response> {
   storeMessage(storedData, { type: "sent", content: body.message });
   const bot = buildBot(storedData);
   const answer = await requestPromptToOpenAI(bot.makePrompt(body.message));
-  storeMessage(storedData, { type: "received", content: answer });
+  const mostRecentData = databaseManager.find(storedData.id);
+  mostRecentData &&
+    storeMessage(mostRecentData, { type: "received", content: answer });
   return new Response(answer);
 }
 

@@ -11,6 +11,11 @@ export default class Personality {
   public readonly badTraits: Array<Trait> = [];
   public readonly neutralTraits: Array<Trait> = [];
 
+  public static readonly DEFAULT_PERSONALITY: Personality = new Personality({
+    goodTraits: [],
+    badTraits: [],
+    neutralTraits: [],
+  });
   public static readonly FULL_PERSONALITY: Personality = new Personality(
     allTraits
   );

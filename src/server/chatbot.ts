@@ -29,7 +29,7 @@ export default class Chatbot {
     return `Assuming I don't support any club, impersonate a ${this.botDescription} and answer the following prompt: "${prompt}"`;
   }
 
-  private getDescription(): string {
+  public getDescription(): string {
     const { goodTraits, badTraits, neutralTraits } = this.personality;
     const hasGoodTraits = goodTraits.length > 0;
     const goodTraitsText = this.getTraitsDescription(goodTraits);
@@ -50,7 +50,7 @@ export default class Chatbot {
     }, "");
   }
 
-  private getTeamDescription(): string {
+  public getTeamDescription(): string {
     return this.team ? `${this.team.name} fan` : "Football fan";
   }
 }

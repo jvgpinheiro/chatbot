@@ -1,8 +1,11 @@
 "use client";
-import Image from "next/image";
+import { ResponseBody as BotData } from "./api/create-bot/route";
 import { Inter } from "next/font/google";
 import styles from "./page.module.css";
-import { useEffect } from "react";
+import { ChangeEvent, KeyboardEvent, useEffect, useState } from "react";
+import Personality from "@/server/personality";
+import Chatbot from "@/server/chatbot";
+import { Message } from "@/data/databaseManager";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -30,107 +33,112 @@ function generateUserID(): string {
 }
 
 export default function Home() {
-  useEffect(() => {
-    const userID = getUserID();
+  const userID = getUserID();
+  const initialBot = new Chatbot({
+    personality: Personality.DEFAULT_PERSONALITY,
+  });
 
+  const [botData, setBotData] = useState<BotData>({
+    available_traits: Personality.FULL_PERSONALITY,
+    current_personality: Personality.DEFAULT_PERSONALITY,
+    messages: [],
+  });
+  const [bot, setBot] = useState<Chatbot>(new Chatbot(initialBot));
+  const [message, setMessage] = useState("");
+
+  useEffect(() => {
     function requestBot(): void {
       const url = new URL("http://localhost:3000/api/create-bot");
       const params = [["id", `${userID}`]];
       url.search = new URLSearchParams(params).toString();
       fetch(url, { method: "GET" })
         .then((response) => response.json())
-        .then((data) => {
-          try {
-            console.log(JSON.parse(data));
-          } catch (err) {
-            console.log(data);
-          }
+        .then((data) => updateBotData(data));
+    }
+
+    function updateBotData(data: any): void {
+      try {
+        const botData: BotData = {
+          ...data,
+          available_traits: new Personality(data.available_traits),
+          current_personality: new Personality(data.current_personality),
+        };
+        setBotData(botData);
+        const bot = new Chatbot({
+          personality: botData.current_personality,
+          team: botData.current_team,
         });
+        setBot(bot);
+      } catch (err) {
+        // Ignore
+      }
     }
 
     requestBot();
-  }, []);
+  }, [userID]);
+
+  function handleInputChange(event: ChangeEvent<HTMLInputElement>): void {
+    const target = event.target;
+    setMessage(target.value);
+  }
+
+  function onInputKeyDown(event: KeyboardEvent<HTMLInputElement>): void {
+    const { key } = event;
+    if (key !== "Enter") {
+      return;
+    }
+    event.preventDefault();
+    sendMessage(message);
+    setMessage("");
+  }
+
+  function sendMessage(message: string): void {
+    const url = new URL("http://localhost:3000/api/process-message");
+    const options = {
+      method: "POST",
+      body: JSON.stringify({ id: userID, message }),
+      headers: { "Content-type": "application/json" },
+    };
+    addMessage({ type: "sent", content: message });
+    fetch(url, options)
+      .then((response) => response.text())
+      .then((text) => addMessage({ type: "received", content: text }));
+  }
+
+  function addMessage(messageData: Message): void {
+    const allMessages: Array<Message> = [...botData.messages, messageData];
+    const newBotData: BotData = { ...botData, messages: [...allMessages] };
+    console.log(newBotData);
+    botData.messages = allMessages;
+    setBotData(newBotData);
+    setTimeout(() => console.log(botData), 100);
+  }
 
   return (
     <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>src/app/page.tsx</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+      <div className={styles.chat}>
+        <div className={styles.header}>
+          <span>BI</span>
+          <span>{`${bot.getTeamDescription()}bot`}</span>
         </div>
-      </div>
-
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-        <div className={styles.thirteen}>
-          <Image src="/thirteen.svg" alt="13" width={40} height={31} priority />
+        <div className={styles.messagesContainer}>
+          <div className={styles.messagesContent}>
+            {botData.messages.map((infoMessage, index) => {
+              return <span key={index}>{infoMessage.content}</span>;
+            })}
+          </div>
         </div>
-      </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://beta.nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={inter.className}>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p className={inter.className}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={inter.className}>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p className={inter.className}>Explore the Next.js 13 playground.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={inter.className}>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p className={inter.className}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
+        <div className={styles.inputContainer}>
+          <input
+            className={styles.input}
+            type="text"
+            placeholder="Type your message..."
+            value={message}
+            onChange={(event) => handleInputChange(event)}
+            onKeyUp={(event) => onInputKeyDown(event)}
+          ></input>
+          <button className={styles.send} value="Send"></button>
+        </div>
       </div>
     </main>
   );

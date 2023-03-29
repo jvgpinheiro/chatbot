@@ -9,7 +9,7 @@ import {
 } from "@/data/databaseManager";
 import Chatbot from "@/server/chatbot";
 
-type ResponseBody = {
+export type ResponseBody = {
   available_traits: Personality;
   current_personality: Personality;
   current_team?: Team;
