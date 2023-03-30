@@ -46,7 +46,7 @@ export default class Chatbot {
         return cur.description;
       }
       const newStr = acc.replaceAll("and", ",");
-      return `${newStr} and ${cur.description}`;
+      return `${newStr} and ${cur.promptOutput}`;
     }, "");
   }
 

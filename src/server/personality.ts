@@ -1,4 +1,12 @@
-import { allTraits, Trait, traitsByID, TraitsEnum } from "./traits";
+import {
+  allTraits,
+  isBadTrait,
+  isGoodTrait,
+  isNeutralTrait,
+  Trait,
+  traitsByID,
+  TraitsEnum,
+} from "./traits";
 
 type ConstructorArgs = {
   goodTraits: Array<Trait>;
@@ -54,5 +62,17 @@ export default class Personality {
       ...this.badTraits.map(toId),
       ...this.neutralTraits.map(toId),
     ];
+  }
+
+  public hasGoodTrait(): boolean {
+    return this.goodTraits.some((trait) => isGoodTrait(trait.id));
+  }
+
+  public hasBadTrait(): boolean {
+    return this.badTraits.some((trait) => isBadTrait(trait.id));
+  }
+
+  public hasNeutralTrait(): boolean {
+    return this.neutralTraits.some((trait) => isNeutralTrait(trait.id));
   }
 }

@@ -27,9 +27,6 @@ export const databaseManager = {
 };
 
 function find(key: string): UserConfig | undefined {
-  console.log(`Find ${key} in db`);
-  console.log(db);
-  console.log();
   return db[key];
 }
 
@@ -83,8 +80,5 @@ function remove(key: string): void {
 }
 
 function saveData(): void {
-  console.log("Save db");
-  console.log(db);
-  console.log();
   fs.writeFileSync("/db.json", JSON.stringify(db, null, 4));
 }

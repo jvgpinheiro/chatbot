@@ -5,7 +5,7 @@ export type Team = {
   secondaryColor: string;
 };
 
-const teams = new Map<string, Team>([
+const allTeams = new Map<string, Team>([
   ["1", { id: "1", name: "América-MG", primaryColor: "", secondaryColor: "" }],
   [
     "2",
@@ -38,5 +38,8 @@ const teams = new Map<string, Team>([
 ]);
 
 export function getTeamByID(id: string): Team | undefined {
-  return teams.get(id);
+  return allTeams.get(id);
 }
+
+const teams = [...allTeams.values()];
+export default teams;

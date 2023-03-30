@@ -1,4 +1,4 @@
-import { getTeamByID, Team } from "@/server/teams";
+import teams, { getTeamByID, Team } from "@/server/teams";
 import url from "url";
 import Personality from "@/server/personality";
 import {
@@ -12,6 +12,7 @@ import Chatbot from "@/server/chatbot";
 export type ResponseBody = {
   available_traits: Personality;
   current_personality: Personality;
+  available_teams: Array<Team>;
   current_team?: Team;
   messages: Array<Message>;
 };
@@ -85,6 +86,7 @@ function buildResponseData(data: UserConfig): ResponseBody {
   const json: ResponseBody = {
     available_traits: Personality.FULL_PERSONALITY,
     current_personality: personality,
+    available_teams: teams,
     messages: data.messages,
   };
   if (team) {

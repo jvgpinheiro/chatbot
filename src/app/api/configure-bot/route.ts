@@ -7,6 +7,10 @@ type ConfigurableData = {
   team_id?: string;
 };
 type RequestBody = { id: string } & ConfigurableData;
+export type ResponseBody = {
+  personality: Personality;
+  team?: Team;
+};
 
 export async function POST(request: Request) {
   try {
@@ -56,10 +60,7 @@ function updateBotConfiguration(
   return { success: true };
 }
 
-function buildSuccessfulResponseData(storedData: UserConfig): {
-  personality: Personality;
-  team?: Team;
-} {
+function buildSuccessfulResponseData(storedData: UserConfig): ResponseBody {
   const { personality_traits, team_id } = storedData;
   const personality = Personality.fromTraitsList(
     personality_traits.map((trait) => +trait)
