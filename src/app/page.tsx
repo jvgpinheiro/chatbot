@@ -186,6 +186,51 @@ export default function Home() {
     }
   }
 
+  function openModal(): void {
+    setModalVisibility(true);
+  }
+
+  function closeModal(): void {
+    setModalVisibility(false);
+  }
+
+  function clearHistory(): void {
+    const url = new URL("http://localhost:3000/api/clear-history");
+    const options = {
+      method: "POST",
+      body: JSON.stringify({ id: userID }),
+      headers: { "Content-type": "application/json" },
+    };
+    const newBotData: BotData = { ...botData, messages: [] };
+    updateBotData(newBotData);
+    sendClearHistoryToAPI(url, options);
+  }
+
+  function sendClearHistoryToAPI(url: URL, options: any): void {
+    function processResponse(response: Response): Promise<any> {
+      if (response.status !== 200) {
+        throw new Error("Failed to clear history");
+      }
+      return response.text();
+    }
+
+    function processResponseData(): void {
+      const newBotData: BotData = {
+        ...botData,
+        messages: [],
+      };
+      updateBotData(newBotData);
+    }
+
+    try {
+      fetch(url, options)
+        .then((response) => processResponse(response))
+        .then(() => processResponseData());
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   function makeTraitsList(
     traits: Array<Trait>,
     title: string,
@@ -220,14 +265,6 @@ export default function Home() {
         </ul>
       </div>
     );
-  }
-
-  function openModal(): void {
-    setModalVisibility(true);
-  }
-
-  function closeModal(): void {
-    setModalVisibility(false);
   }
 
   function makeTeamElement(team: Team): JSX.Element {
@@ -315,7 +352,7 @@ export default function Home() {
       <div className={styles.chatContainer}>
         <div className={styles.chat}>
           <div className={styles.header}>
-            <div className={styles.info} onClick={() => openModal()}>
+            <div className={styles.headerInfo} onClick={() => openModal()}>
               <Image
                 className={styles.botIcon}
                 src="/chatbot.png"
@@ -332,6 +369,17 @@ export default function Home() {
                 alt="team-icon"
                 width={30}
                 height={30}
+              ></Image>
+            </div>
+            <div className={styles.headerButtons}>
+              <Image
+                className={styles.binIcon}
+                src="/bin.png"
+                alt="clear history bin icon"
+                width={16}
+                height={16}
+                title="Clear history"
+                onClick={() => clearHistory()}
               ></Image>
             </div>
           </div>
@@ -364,11 +412,15 @@ export default function Home() {
               onChange={(event) => handleInputChange(event)}
               onKeyUp={(event) => onInputKeyDown(event)}
             ></input>
-            <button
-              className={styles.send}
-              value="Send"
+            <Image
+              className={styles.sendIcon}
+              src="/send.png"
+              alt="send message"
+              width={26}
+              height={26}
+              title="Send message"
               onClick={() => sendMessage(message)}
-            ></button>
+            ></Image>
           </div>
         </div>
       </div>
