@@ -2,7 +2,7 @@
 import { ResponseBody as BotData } from "./api/get-bot/route";
 import { ResponseBody as BotConfigurationData } from "./api/configure-bot/route";
 import styles from "./page.module.css";
-import { ChangeEvent, KeyboardEvent, useEffect, useState } from "react";
+import { ChangeEvent, KeyboardEvent, useEffect, useState, useRef } from "react";
 import Personality from "@/server/personality";
 import Chatbot from "@/server/chatbot";
 import { Message } from "@/data/databaseManager";
@@ -50,6 +50,7 @@ export default function Home() {
   const [teamId, setTeamId] = useState<string | undefined>();
   const [selectedTraits, setSelectedTraits] = useState<Set<number>>(new Set());
   const [isModalOpen, setModalVisibility] = useState<boolean>(false);
+  const [isBotTyping, setBotTyping] = useState<boolean>(false);
 
   useEffect(() => {
     setUserID(getUserID());
@@ -73,6 +74,16 @@ export default function Home() {
     const set = new Set(bot.personality.toTraitIdList());
     setSelectedTraits(set);
   }, [bot]);
+
+  useEffect(() => {
+    const scrollableMessagesContainerRef = document.querySelector(
+      `.${styles.messagesContent}`
+    );
+    if (scrollableMessagesContainerRef) {
+      const { scrollHeight, clientHeight } = scrollableMessagesContainerRef;
+      scrollableMessagesContainerRef.scrollTop = scrollHeight - clientHeight;
+    }
+  }, [isBotTyping]);
 
   function updateBotData(data: BotData): void {
     try {
@@ -101,7 +112,7 @@ export default function Home() {
 
   function onInputKeyDown(event: KeyboardEvent<HTMLInputElement>): void {
     const { key } = event;
-    if (key !== "Enter") {
+    if (key !== "Enter" || !message) {
       return;
     }
     event.preventDefault();
@@ -117,9 +128,43 @@ export default function Home() {
       headers: { "Content-type": "application/json" },
     };
     addMessage({ type: "sent", content: message });
-    fetch(url, options)
-      .then((response) => response.text())
-      .then((text) => addMessage({ type: "received", content: text }));
+    sendMessageToAPI(url, options);
+  }
+
+  function sendMessageToAPI(url: URL, options: any): void {
+    function processResponse(response: Response) {
+      if (response.status !== 200) {
+        setBotTyping(false);
+        throw new Error("Invalid message");
+      }
+      return response.text();
+    }
+
+    function processMessageData(text: string): void {
+      addMessage({ type: "received", content: text });
+      setBotTyping(false);
+      console.log(text);
+    }
+
+    function handleFailure(err: any): void {
+      addMessage({
+        type: "received",
+        content:
+          "Sorry, I'm unable to provide an answer right now. Please try again or reload the page",
+      });
+      setBotTyping(false);
+      console.error(err);
+    }
+
+    try {
+      setBotTyping(true);
+      fetch(url, options)
+        .then((response) => processResponse(response))
+        .then((text) => processMessageData(text))
+        .catch((err) => handleFailure(err));
+    } catch (err) {
+      handleFailure(err);
+    }
   }
 
   function addMessage(messageData: Message): void {
@@ -176,11 +221,11 @@ export default function Home() {
       };
       updateBotData(newBotData);
     }
-
     try {
       fetch(url, options)
         .then((response) => processResponse(response))
-        .then((json) => processConfigurationData(json));
+        .then((json) => processConfigurationData(json))
+        .catch((err) => console.error(err));
     } catch (err) {
       console.error(err);
     }
@@ -225,7 +270,8 @@ export default function Home() {
     try {
       fetch(url, options)
         .then((response) => processResponse(response))
-        .then(() => processResponseData());
+        .then(() => processResponseData())
+        .catch((err) => console.error(err));
     } catch (err) {
       console.error(err);
     }
@@ -352,7 +398,11 @@ export default function Home() {
       <div className={styles.chatContainer}>
         <div className={styles.chat}>
           <div className={styles.header}>
-            <div className={styles.headerInfo} onClick={() => openModal()}>
+            <div
+              className={styles.headerInfo}
+              onClick={() => openModal()}
+              title="Edit bot"
+            >
               <Image
                 className={styles.botIcon}
                 src="/chatbot.png"
@@ -384,7 +434,11 @@ export default function Home() {
             </div>
           </div>
           <div className={styles.messagesContainer}>
-            <div className={styles.messagesContent}>
+            <div
+              className={`${styles.messagesContent} ${
+                isBotTyping ? styles.botTyping : ""
+              }`}
+            >
               {botData.messages.map(({ type, content }, index) => {
                 return (
                   <div
@@ -401,6 +455,23 @@ export default function Home() {
                   </div>
                 );
               })}
+            </div>
+            <div
+              className={`${styles.botTypingContainer} ${
+                isBotTyping ? "" : styles.hidden
+              }`}
+            >
+              <Image
+                className={styles.botIcon}
+                src="/chatbot.png"
+                alt="chatbot icon"
+                width={16}
+                height={16}
+                title="Send message"
+                onClick={() => sendMessage(message)}
+              ></Image>
+              <span className={styles.botTypingText}>Futebot is typing</span>
+              <span className={styles.botTypingDots}>...</span>
             </div>
           </div>
           <div className={styles.inputContainer}>
