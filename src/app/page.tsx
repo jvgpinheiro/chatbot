@@ -1,6 +1,9 @@
 "use client";
 import { ResponseBody as BotData } from "./api/get-bot/route";
-import { ResponseBody as BotConfigurationData } from "./api/configure-bot/route";
+import {
+  ResponseBody as BotConfigurationData,
+  ConfigurableData,
+} from "./api/configure-bot/route";
 import styles from "./page.module.css";
 import { ChangeEvent, KeyboardEvent, useEffect, useState, useRef } from "react";
 import { CSSTransition } from "react-transition-group";
@@ -179,15 +182,17 @@ export default function Home() {
     const newTraits = new Set(selectedTraits);
     selectedTraits.has(id) ? newTraits.delete(id) : newTraits.add(id);
     const traitsList = [...newTraits.values()].map((trait) => +trait);
-    const personality = Personality.fromTraitsList(traitsList);
     const traitListForRequest = traitsList.map((id) => id.toString());
-    configureBot(traitListForRequest, teamId);
+    configureBot({
+      personality_traits: traitListForRequest,
+      team_id: teamId ?? "-1",
+    });
   }
 
-  function configureBot(
-    personality_traits: Array<string>,
-    team_id?: string
-  ): void {
+  function configureBot({
+    personality_traits,
+    team_id,
+  }: ConfigurableData): void {
     const url = new URL("http://localhost:3000/api/configure-bot");
     const options = {
       method: "POST",
@@ -318,11 +323,16 @@ export default function Home() {
     function onTeamClick(): void {
       const newSelectedTeam = isSelectedTeam ? undefined : team;
       const newBotData: BotData = { ...botData, current_team: newSelectedTeam };
+      console.log("click");
+      console.log(newBotData);
       const personality_traits = newBotData.current_personality
         .toTraitIdList()
         .map((id) => id.toString());
       updateBotData(newBotData);
-      configureBot(personality_traits, newSelectedTeam?.id);
+      configureBot({
+        personality_traits,
+        team_id: newSelectedTeam?.id ?? "-1",
+      });
     }
 
     const isSelectedTeam = team.id === teamId;
@@ -426,15 +436,15 @@ export default function Home() {
                 height={30}
               ></Image>
               <span className={styles.botName}>Footbot</span>
-              <Image
-                className={`${styles.teamIcon} ${
-                  teamId ? `team_${teamId}` : styles.hidden
-                }`}
-                src={`/teams/team_${teamId ?? 999}.png`}
-                alt="team-icon"
-                width={30}
-                height={30}
-              ></Image>
+              {teamId && (
+                <Image
+                  className={`${styles.teamIcon} ${`team_${teamId}`}`}
+                  src={`/teams/team_${teamId}.png`}
+                  alt="team-icon"
+                  width={30}
+                  height={30}
+                ></Image>
+              )}
             </div>
             <div className={styles.headerButtons}>
               <Image

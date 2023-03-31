@@ -2,9 +2,9 @@ import { databaseManager, UserConfig } from "@/data/databaseManager";
 import Personality from "@/server/personality";
 import { getTeamByID, Team } from "@/server/teams";
 
-type ConfigurableData = {
-  personality_traits?: Array<string>;
-  team_id?: string;
+export type ConfigurableData = {
+  personality_traits: Array<string>;
+  team_id: string;
 };
 type RequestBody = { id: string } & ConfigurableData;
 export type ResponseBody = {

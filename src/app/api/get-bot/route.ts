@@ -56,7 +56,7 @@ function createBot(id: string): void {
   });
   const bot = new Chatbot({ personality: defaultPersonality });
   const data: UserBaseConfig = {
-    team_id: bot.team?.id ?? "",
+    team_id: bot.team?.id ?? "-1",
     messages: [],
     personality_traits: bot.personality
       .toTraitIdList()
@@ -69,7 +69,7 @@ function makeDefaultUser(key: string): UserConfig {
   const dtNow = new Date().toISOString();
   return {
     id: key,
-    team_id: "",
+    team_id: "-1",
     personality_traits: [],
     messages: [],
     date_created: dtNow,
