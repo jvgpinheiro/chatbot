@@ -3,6 +3,7 @@ import { ResponseBody as BotData } from "./api/get-bot/route";
 import { ResponseBody as BotConfigurationData } from "./api/configure-bot/route";
 import styles from "./page.module.css";
 import { ChangeEvent, KeyboardEvent, useEffect, useState, useRef } from "react";
+import { CSSTransition } from "react-transition-group";
 import Personality from "@/server/personality";
 import Chatbot from "@/server/chatbot";
 import { Message } from "@/data/databaseManager";
@@ -290,7 +291,7 @@ export default function Home() {
     function getItemClasses(trait: Trait) {
       const base = styles.modalTraitItemWrapper;
       const custom = customItemClasses.join(" ");
-      const selected = selectedTraits.has(trait.id) ? styles.modalSelected : "";
+      const selected = selectedTraits.has(trait.id) ? styles.selected : "";
       return `${base} ${custom} ${selected}`;
     }
 
@@ -330,7 +331,7 @@ export default function Home() {
         key={team.id}
         onClick={() => onTeamClick()}
         className={`${styles.modalTeam} ${
-          isSelectedTeam ? styles.modalSelected : ""
+          isSelectedTeam ? styles.selected : ""
         }`}
       >
         <div className={styles.modalTeamLogoContainer}>
@@ -349,52 +350,66 @@ export default function Home() {
 
   return (
     <main className={styles.main}>
-      <div
-        className={`${styles.modalOverlay} ${isModalOpen ? "" : styles.hidden}`}
+      <CSSTransition
+        in={isModalOpen}
+        timeout={200}
+        classNames={{
+          appear: styles.modalTransitionAppear,
+          appearActive: styles.modalTransitionAppearActive,
+          appearDone: styles.modalTransitionAppearDone,
+          enter: styles.modalTransitionEnter,
+          enterActive: styles.modalTransitionEnterActive,
+          enterDone: styles.modalTransitionEnterDone,
+          exit: styles.modalTransitionExit,
+          exitActive: styles.modalTransitionExitActive,
+          exitDone: styles.modalTransitionExitDone,
+        }}
       >
-        <div className={styles.modal}>
-          <div className={styles.modalTitlebar}>
-            <span className={styles.modalTitle}>Bot Configuration</span>
-            <div className={styles.modalClose} onClick={() => closeModal()}>
-              <span>X</span>
-            </div>
-          </div>
-          <div className={styles.modalBody}>
-            <div className={styles.modalSectionContainer}>
-              <span className={styles.modalSectionDescription}>Teams</span>
-              <div className={styles.modalTeamsContainer}>
-                {botData.available_teams.map((team) => makeTeamElement(team))}
+        <div className={`${styles.modalOverlay}`}>
+          <div className={styles.modal}>
+            <div className={styles.modalTitlebar}>
+              <span className={styles.modalTitle}>Footbot Configuration</span>
+              <div className={styles.modalClose} onClick={() => closeModal()}>
+                <span>X</span>
               </div>
             </div>
-            <div className={styles.modalSectionContainer}>
-              <span className={styles.modalSectionDescription}>Traits</span>
-              <div className={styles.modalTraits}>
-                {makeTraitsList(
-                  botData.available_traits.goodTraits,
-                  "Good",
-                  [],
-                  bot.personality.hasBadTrait()
-                    ? [styles.modalDisabledTraits]
-                    : []
-                )}
-                {makeTraitsList(
-                  botData.available_traits.badTraits,
-                  "Bad",
-                  [],
-                  bot.personality.hasGoodTrait()
-                    ? [styles.modalDisabledTraits]
-                    : []
-                )}
-                {makeTraitsList(
-                  botData.available_traits.neutralTraits,
-                  "Neutral",
-                  [styles.modalNeutralTraitBox]
-                )}
+            <div className={styles.modalBody}>
+              <div className={styles.modalSectionContainer}>
+                <span className={styles.modalSectionDescription}>Teams</span>
+                <div className={styles.modalTeamsContainer}>
+                  {botData.available_teams.map((team) => makeTeamElement(team))}
+                </div>
+              </div>
+              <div className={styles.modalSectionContainer}>
+                <span className={styles.modalSectionDescription}>Traits</span>
+                <div className={styles.modalTraits}>
+                  {makeTraitsList(
+                    botData.available_traits.goodTraits,
+                    "Good",
+                    [],
+                    bot.personality.hasBadTrait()
+                      ? [styles.modalDisabledTraits]
+                      : []
+                  )}
+                  {makeTraitsList(
+                    botData.available_traits.badTraits,
+                    "Bad",
+                    [],
+                    bot.personality.hasGoodTrait()
+                      ? [styles.modalDisabledTraits]
+                      : []
+                  )}
+                  {makeTraitsList(
+                    botData.available_traits.neutralTraits,
+                    "Neutral",
+                    [styles.modalNeutralTraitBox]
+                  )}
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </CSSTransition>
       <div className={styles.chatContainer}>
         <div className={styles.chat}>
           <div className={styles.header}>
@@ -410,7 +425,7 @@ export default function Home() {
                 width={30}
                 height={30}
               ></Image>
-              <span className={styles.botName}>Futebot</span>
+              <span className={styles.botName}>Footbot</span>
               <Image
                 className={`${styles.teamIcon} ${
                   teamId ? `team_${teamId}` : styles.hidden
@@ -450,8 +465,9 @@ export default function Home() {
                     key={index}
                   >
                     <div className={styles.message}>
-                      <span>{content}</span>
+                      <span className={styles.messageText}>{content}</span>
                     </div>
+                    <div className={styles.messageTail}></div>
                   </div>
                 );
               })}
@@ -470,7 +486,7 @@ export default function Home() {
                 title="Send message"
                 onClick={() => sendMessage(message)}
               ></Image>
-              <span className={styles.botTypingText}>Futebot is typing</span>
+              <span className={styles.botTypingText}>Footbot is typing</span>
               <span className={styles.botTypingDots}>...</span>
             </div>
           </div>
