@@ -1,0 +1,14 @@
+.chat {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+    font-size: 0.85rem;
+    width: 100%;
+    min-width: 300px;
+    z-index: 2;
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 0 3px 0px #a0a0a0;
+}

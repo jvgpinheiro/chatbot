@@ -5,13 +5,13 @@ import {
   ConfigurableData,
 } from "./api/configure-bot/route";
 import styles from "./page.module.css";
-import { ChangeEvent, KeyboardEvent, useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { CSSTransition } from "react-transition-group";
 import Personality from "@/server/personality";
 import Chatbot from "@/server/chatbot";
 import { Message } from "@/data/databaseManager";
-import Image from "next/image";
 import ModalComponent from "@/components/modal/modalComponent";
+import ChatComponent from "@/components/chat/chatComponent";
 
 function getUserID(): string {
   const userID = localStorage.getItem("userID");
@@ -49,8 +49,6 @@ export default function Home() {
     messages: [],
   });
   const [bot, setBot] = useState<Chatbot>(new Chatbot(initialBot));
-  const [message, setMessage] = useState("");
-  const [teamId, setTeamId] = useState<string | undefined>();
   const [isModalOpen, setModalVisibility] = useState<boolean>(false);
   const [isBotTyping, setBotTyping] = useState<boolean>(false);
 
@@ -96,25 +94,9 @@ export default function Home() {
         team: botData.current_team,
       });
       setBot(bot);
-      setTeamId(bot.team?.id);
     } catch (err) {
       console.error(err);
     }
-  }
-
-  function handleInputChange(event: ChangeEvent<HTMLInputElement>): void {
-    const target = event.target;
-    setMessage(target.value);
-  }
-
-  function onInputKeyDown(event: KeyboardEvent<HTMLInputElement>): void {
-    const { key } = event;
-    if (key !== "Enter" || !message) {
-      return;
-    }
-    event.preventDefault();
-    sendMessage(message);
-    setMessage("");
   }
 
   function sendMessage(message: string): void {
@@ -301,105 +283,14 @@ export default function Home() {
         ></ModalComponent>
       </CSSTransition>
       <div className={styles.chatContainer}>
-        <div className={styles.chat}>
-          <div className={styles.header}>
-            <div
-              className={styles.headerInfo}
-              onClick={() => openModal()}
-              title="Edit bot"
-            >
-              <Image
-                className={styles.botIcon}
-                src="/chatbot.png"
-                alt="chatbot-icon"
-                width={30}
-                height={30}
-              ></Image>
-              <span className={styles.botName}>Footbot</span>
-              {teamId && (
-                <Image
-                  className={`${styles.teamIcon} ${`team_${teamId}`}`}
-                  src={`/teams/team_${teamId}.png`}
-                  alt="team-icon"
-                  width={30}
-                  height={30}
-                ></Image>
-              )}
-            </div>
-            <div className={styles.headerButtons}>
-              <Image
-                className={styles.binIcon}
-                src="/bin.png"
-                alt="clear history bin icon"
-                width={16}
-                height={16}
-                title="Clear history"
-                onClick={() => clearHistory()}
-              ></Image>
-            </div>
-          </div>
-          <div className={styles.messagesContainer}>
-            <div
-              className={`${styles.messagesContent} ${
-                isBotTyping ? styles.botTyping : ""
-              }`}
-            >
-              {botData.messages.map(({ type, content }, index) => {
-                return (
-                  <div
-                    className={`${styles.messageSpace} ${
-                      type === "sent"
-                        ? styles.messageSpaceSent
-                        : styles.messageSpaceReceived
-                    }`}
-                    key={index}
-                  >
-                    <div className={styles.message}>
-                      <span className={styles.messageText}>{content}</span>
-                    </div>
-                    <div className={styles.messageTail}></div>
-                  </div>
-                );
-              })}
-            </div>
-            <div
-              className={`${styles.botTypingContainer} ${
-                isBotTyping ? "" : styles.hidden
-              }`}
-            >
-              <Image
-                className={styles.botIcon}
-                src="/chatbot.png"
-                alt="chatbot icon"
-                width={16}
-                height={16}
-                title="Send message"
-                onClick={() => sendMessage(message)}
-              ></Image>
-              <span className={styles.botTypingText}>Footbot is typing</span>
-              <span className={styles.botTypingDots}>...</span>
-            </div>
-          </div>
-          <div className={styles.inputContainer}>
-            <input
-              className={styles.input}
-              type="text"
-              placeholder="Type your message..."
-              value={message}
-              onChange={(event) => handleInputChange(event)}
-              onKeyUp={(event) => onInputKeyDown(event)}
-            ></input>
-            <Image
-              className={styles.sendIcon}
-              src="/send.png"
-              alt="send message"
-              width={26}
-              height={26}
-              title="Send message"
-              onClick={() => sendMessage(message)}
-            ></Image>
-          </div>
-        </div>
+        <ChatComponent
+          botData={botData}
+          bot={bot}
+          isBotTyping={isBotTyping}
+          onConfig={() => openModal()}
+          onHistoryClear={() => clearHistory()}
+          onMessageSent={(event, message) => sendMessage(message)}
+        ></ChatComponent>
       </div>
     </main>
   );
