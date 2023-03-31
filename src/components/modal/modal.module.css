@@ -1,0 +1,58 @@
+.overlay {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #e0e0e060;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.modal {
+    width: clamp(280px, 100% - 20px, 600px);
+    height: auto;
+    border-radius: 4px;
+    box-shadow: 0 0 3px 0px #a0a0a0;
+    background-color: var(--palette-color-1);
+}
+
+.titlebar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 40px;
+    padding: 12px;
+    border-bottom: 1px solid var(--palette-color-7);
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.close {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    width: 16px;
+}
+
+.body {
+    display: flex;
+    flex-direction: column;
+    padding: 12px;
+    gap: 20px;
+}
+
+.sectionContainer {
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.sectionTitle {
+    font-weight: 600;
+    font-size: 18px;
+}

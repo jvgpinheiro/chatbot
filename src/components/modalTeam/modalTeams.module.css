@@ -1,0 +1,44 @@
+.teamsContainer {
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 5px;
+    max-height: 300px;
+    overflow: auto;
+}
+
+.team {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100px;
+    height: auto;
+    gap: 2px;
+    padding: 5px 0 4px;
+    border-radius: 4px;
+    background-color: var(--palette-color-0);
+    border: 1px solid var(--palette-color-7);
+    cursor: pointer;
+    user-select: none;
+    transition: 0.2s;
+}
+
+.teamName {
+    font-size: 11px;
+    line-height: 1;
+}
+
+.teamsContainer {
+    display: flex;
+    justify-content: center;
+}
+
+.selected {
+    background-color: var(--palette-color-2);
+}
+
+.hidden {
+    display: none;
+}

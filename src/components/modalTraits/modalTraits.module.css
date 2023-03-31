@@ -1,0 +1,63 @@
+.traits {
+    width: 100%;
+    height: auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.traitTitle {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.traitBox {
+    display: flex;
+    flex-direction: column;
+    width: calc(50% - 4px);
+    gap: 4px;
+}
+
+.traitsList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.traitItem {
+    list-style-type: none;
+    text-transform: capitalize;
+    font-size: 12px;
+}
+
+.traitItemWrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 85px;
+    height: 24px;
+    background-color: var(--palette-color-0);
+    border: 1px solid var(--palette-color-7);
+    border-radius: 4px;
+    cursor: pointer;
+    user-select: none;
+    font-size: 12px;
+    transition: 0.2s;
+}
+
+.disabledTraits {
+    background-color: #a8a8a8;
+    pointer-events: none;
+}
+
+.neutralTraitBox {
+    width: auto;
+}
+
+.selected {
+    background-color: var(--palette-color-2);
+}
+
+.hidden {
+    display: none;
+}

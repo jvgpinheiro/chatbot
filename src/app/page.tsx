@@ -11,8 +11,7 @@ import Personality from "@/server/personality";
 import Chatbot from "@/server/chatbot";
 import { Message } from "@/data/databaseManager";
 import Image from "next/image";
-import { Trait } from "@/server/traits";
-import { Team } from "@/server/teams";
+import ModalComponent from "@/components/modal/modalComponent";
 
 function getUserID(): string {
   const userID = localStorage.getItem("userID");
@@ -52,7 +51,6 @@ export default function Home() {
   const [bot, setBot] = useState<Chatbot>(new Chatbot(initialBot));
   const [message, setMessage] = useState("");
   const [teamId, setTeamId] = useState<string | undefined>();
-  const [selectedTraits, setSelectedTraits] = useState<Set<number>>(new Set());
   const [isModalOpen, setModalVisibility] = useState<boolean>(false);
   const [isBotTyping, setBotTyping] = useState<boolean>(false);
 
@@ -73,11 +71,6 @@ export default function Home() {
     requestBot();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userID]);
-
-  useEffect(() => {
-    const set = new Set(bot.personality.toTraitIdList());
-    setSelectedTraits(set);
-  }, [bot]);
 
   useEffect(() => {
     const scrollableMessagesContainerRef = document.querySelector(
@@ -178,17 +171,6 @@ export default function Home() {
     setBotData(newBotData);
   }
 
-  function onTraitClick({ id }: Trait): void {
-    const newTraits = new Set(selectedTraits);
-    selectedTraits.has(id) ? newTraits.delete(id) : newTraits.add(id);
-    const traitsList = [...newTraits.values()].map((trait) => +trait);
-    const traitListForRequest = traitsList.map((id) => id.toString());
-    configureBot({
-      personality_traits: traitListForRequest,
-      team_id: teamId ?? "-1",
-    });
-  }
-
   function configureBot({
     personality_traits,
     team_id,
@@ -283,79 +265,15 @@ export default function Home() {
     }
   }
 
-  function makeTraitsList(
-    traits: Array<Trait>,
-    title: string,
-    customBoxClasses: Array<string> = [],
-    customItemClasses: Array<string> = []
-  ): JSX.Element {
-    function getBoxClasses() {
-      return `${styles.modalTraitBox} ${customBoxClasses.join(" ")}`;
-    }
-
-    function getItemClasses(trait: Trait) {
-      const base = styles.modalTraitItemWrapper;
-      const custom = customItemClasses.join(" ");
-      const selected = selectedTraits.has(trait.id) ? styles.selected : "";
-      return `${base} ${custom} ${selected}`;
-    }
-
-    return (
-      <div className={getBoxClasses()}>
-        <span className={styles.modalTraitTitle}>{title}</span>
-        <ul className={styles.modalTraitsList}>
-          {traits.map((trait) => (
-            <li key={trait.id} className={styles.modalTraitItem}>
-              <div
-                className={getItemClasses(trait)}
-                onClick={() => onTraitClick(trait)}
-              >
-                <span>{trait.description}</span>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </div>
-    );
-  }
-
-  function makeTeamElement(team: Team): JSX.Element {
-    function onTeamClick(): void {
-      const newSelectedTeam = isSelectedTeam ? undefined : team;
-      const newBotData: BotData = { ...botData, current_team: newSelectedTeam };
-      console.log("click");
-      console.log(newBotData);
-      const personality_traits = newBotData.current_personality
-        .toTraitIdList()
-        .map((id) => id.toString());
-      updateBotData(newBotData);
-      configureBot({
-        personality_traits,
-        team_id: newSelectedTeam?.id ?? "-1",
-      });
-    }
-
-    const isSelectedTeam = team.id === teamId;
-    return (
-      <div
-        key={team.id}
-        onClick={() => onTeamClick()}
-        className={`${styles.modalTeam} ${
-          isSelectedTeam ? styles.selected : ""
-        }`}
-      >
-        <div className={styles.modalTeamLogoContainer}>
-          <Image
-            className={styles.modalTeamLogo}
-            src={`/teams/team_${team.id}.png`}
-            alt={`${team.name}'s logo`}
-            width={20}
-            height={20}
-          ></Image>
-        </div>
-        <span className={styles.modalTeamName}>{team.name}</span>
-      </div>
-    );
+  function onBotConfigChange(updatedBot: Chatbot): void {
+    const current_personality = updatedBot.personality;
+    const current_team = updatedBot.team;
+    const team_id = current_team?.id ?? "-1";
+    const personality_traits = current_personality
+      .toTraitIdList()
+      .map((id) => id.toString());
+    updateBotData({ ...botData, current_personality, current_team });
+    configureBot({ personality_traits, team_id });
   }
 
   return (
@@ -375,50 +293,12 @@ export default function Home() {
           exitDone: styles.modalTransitionExitDone,
         }}
       >
-        <div className={`${styles.modalOverlay}`}>
-          <div className={styles.modal}>
-            <div className={styles.modalTitlebar}>
-              <span className={styles.modalTitle}>Footbot Configuration</span>
-              <div className={styles.modalClose} onClick={() => closeModal()}>
-                <span>X</span>
-              </div>
-            </div>
-            <div className={styles.modalBody}>
-              <div className={styles.modalSectionContainer}>
-                <span className={styles.modalSectionDescription}>Teams</span>
-                <div className={styles.modalTeamsContainer}>
-                  {botData.available_teams.map((team) => makeTeamElement(team))}
-                </div>
-              </div>
-              <div className={styles.modalSectionContainer}>
-                <span className={styles.modalSectionDescription}>Traits</span>
-                <div className={styles.modalTraits}>
-                  {makeTraitsList(
-                    botData.available_traits.goodTraits,
-                    "Good",
-                    [],
-                    bot.personality.hasBadTrait()
-                      ? [styles.modalDisabledTraits]
-                      : []
-                  )}
-                  {makeTraitsList(
-                    botData.available_traits.badTraits,
-                    "Bad",
-                    [],
-                    bot.personality.hasGoodTrait()
-                      ? [styles.modalDisabledTraits]
-                      : []
-                  )}
-                  {makeTraitsList(
-                    botData.available_traits.neutralTraits,
-                    "Neutral",
-                    [styles.modalNeutralTraitBox]
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <ModalComponent
+          botData={botData}
+          bot={bot}
+          onClose={() => closeModal()}
+          onBotConfigChange={(bot) => onBotConfigChange(bot)}
+        ></ModalComponent>
       </CSSTransition>
       <div className={styles.chatContainer}>
         <div className={styles.chat}>
