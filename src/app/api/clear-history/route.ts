@@ -1,7 +1,7 @@
 import { databaseManager } from "@/data/databaseManager";
 
-type RequestBody = { id: string };
-export type ResponseBody = {};
+export type RequestBody = { id: string };
+export type ResponseBody = string;
 
 export async function POST(request: Request) {
   try {

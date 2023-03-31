@@ -6,7 +6,7 @@ export type ConfigurableData = {
   personality_traits: Array<string>;
   team_id: string;
 };
-type RequestBody = { id: string } & ConfigurableData;
+export type RequestBody = { id: string } & ConfigurableData;
 export type ResponseBody = {
   personality: Personality;
   team?: Team;

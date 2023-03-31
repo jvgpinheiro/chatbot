@@ -12,29 +12,13 @@ import Chatbot from "@/server/chatbot";
 import { Message } from "@/data/databaseManager";
 import ModalComponent from "@/components/modal/modalComponent";
 import ChatComponent from "@/components/chat/chatComponent";
-
-function getUserID(): string {
-  const userID = localStorage.getItem("userID");
-  if (userID) {
-    return userID;
-  }
-  const newUserID = generateUserID();
-  localStorage.setItem("userID", newUserID);
-  return newUserID;
-}
-
-function generateUserID(): string {
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
-    /[xy]/g,
-    (character) => {
-      const hex = 16;
-      const random = (Math.random() * hex) | 0;
-      // eslint-disable-next-line no-magic-numbers
-      const value = character === "x" ? random : (random & 0x3) | 0x8;
-      return value.toString(hex);
-    }
-  );
-}
+import {
+  getBotFromAPI,
+  sendBotConfigurationToAPI,
+  sendClearHistoryToAPI,
+  sendMessageToAPI,
+} from "@/utils/apiUtils";
+import { getUserID } from "@/utils/localStorageUtils";
 
 export default function Home() {
   const initialBot = new Chatbot({
@@ -58,12 +42,9 @@ export default function Home() {
 
   useEffect(() => {
     function requestBot(): void {
-      const url = new URL("http://localhost:3000/api/get-bot");
-      const params = [["id", `${userID}`]];
-      url.search = new URLSearchParams(params).toString();
-      fetch(url, { method: "GET" })
-        .then((response) => response.json())
-        .then((data) => updateBotData(data));
+      getBotFromAPI([["id", `${userID}`]])
+        .then((data) => updateBotData(data))
+        .catch((err) => console.error(err));
     }
 
     requestBot();
@@ -100,50 +81,11 @@ export default function Home() {
   }
 
   function sendMessage(message: string): void {
-    const url = new URL("http://localhost:3000/api/process-message");
-    const options = {
-      method: "POST",
-      body: JSON.stringify({ id: userID, message }),
-      headers: { "Content-type": "application/json" },
-    };
     addMessage({ type: "sent", content: message });
-    sendMessageToAPI(url, options);
-  }
-
-  function sendMessageToAPI(url: URL, options: any): void {
-    function processResponse(response: Response) {
-      if (response.status !== 200) {
-        setBotTyping(false);
-        throw new Error("Invalid message");
-      }
-      return response.text();
-    }
-
-    function processMessageData(text: string): void {
-      addMessage({ type: "received", content: text });
-      setBotTyping(false);
-      console.log(text);
-    }
-
-    function handleFailure(err: any): void {
-      addMessage({
-        type: "received",
-        content:
-          "Sorry, I'm unable to provide an answer right now. Please try again or reload the page",
-      });
-      setBotTyping(false);
-      console.error(err);
-    }
-
-    try {
-      setBotTyping(true);
-      fetch(url, options)
-        .then((response) => processResponse(response))
-        .then((text) => processMessageData(text))
-        .catch((err) => handleFailure(err));
-    } catch (err) {
-      handleFailure(err);
-    }
+    sendMessageToAPI({ id: userID, message })
+      .then((text) => addMessage({ type: "received", content: text }))
+      .catch(({ text }) => addMessage({ type: "received", content: text }))
+      .finally(() => setBotTyping(false));
   }
 
   function addMessage(messageData: Message): void {
@@ -153,37 +95,8 @@ export default function Home() {
     setBotData(newBotData);
   }
 
-  function configureBot({
-    personality_traits,
-    team_id,
-  }: ConfigurableData): void {
-    const url = new URL("http://localhost:3000/api/configure-bot");
-    const options = {
-      method: "POST",
-      body: JSON.stringify({
-        id: userID,
-        personality_traits,
-        team_id,
-      }),
-      headers: { "Content-type": "application/json" },
-    };
-    const personality = Personality.fromTraitsList(
-      personality_traits.map((trait) => +trait)
-    );
-    const newBot = new Chatbot({ personality, team: botData.current_team });
-    setBot(newBot);
-    sendBotConfigurationToAPI(url, options);
-  }
-
-  function sendBotConfigurationToAPI(url: URL, options: any): void {
-    function processResponse(response: Response): Promise<any> {
-      if (response.status !== 200) {
-        throw new Error("Failed to configure bot");
-      }
-      return response.json();
-    }
-
-    function processConfigurationData(configData: BotConfigurationData): void {
+  function configureBot(data: ConfigurableData): void {
+    function onSuccess(configData: BotConfigurationData): void {
       const newBotData: BotData = {
         ...botData,
         current_personality: configData.personality,
@@ -191,60 +104,22 @@ export default function Home() {
       };
       updateBotData(newBotData);
     }
-    try {
-      fetch(url, options)
-        .then((response) => processResponse(response))
-        .then((json) => processConfigurationData(json))
-        .catch((err) => console.error(err));
-    } catch (err) {
-      console.error(err);
-    }
-  }
 
-  function openModal(): void {
-    setModalVisibility(true);
-  }
-
-  function closeModal(): void {
-    setModalVisibility(false);
+    const { personality_traits } = data;
+    const personality = Personality.fromTraitsList(
+      personality_traits.map((trait) => +trait)
+    );
+    const newBot = new Chatbot({ personality, team: botData.current_team });
+    setBot(newBot);
+    sendBotConfigurationToAPI({ id: userID, ...data })
+      .then((responseData) => onSuccess(responseData))
+      .catch((err) => console.error(err));
   }
 
   function clearHistory(): void {
-    const url = new URL("http://localhost:3000/api/clear-history");
-    const options = {
-      method: "POST",
-      body: JSON.stringify({ id: userID }),
-      headers: { "Content-type": "application/json" },
-    };
     const newBotData: BotData = { ...botData, messages: [] };
     updateBotData(newBotData);
-    sendClearHistoryToAPI(url, options);
-  }
-
-  function sendClearHistoryToAPI(url: URL, options: any): void {
-    function processResponse(response: Response): Promise<any> {
-      if (response.status !== 200) {
-        throw new Error("Failed to clear history");
-      }
-      return response.text();
-    }
-
-    function processResponseData(): void {
-      const newBotData: BotData = {
-        ...botData,
-        messages: [],
-      };
-      updateBotData(newBotData);
-    }
-
-    try {
-      fetch(url, options)
-        .then((response) => processResponse(response))
-        .then(() => processResponseData())
-        .catch((err) => console.error(err));
-    } catch (err) {
-      console.error(err);
-    }
+    sendClearHistoryToAPI({ id: userID });
   }
 
   function onBotConfigChange(updatedBot: Chatbot): void {
@@ -256,6 +131,14 @@ export default function Home() {
       .map((id) => id.toString());
     updateBotData({ ...botData, current_personality, current_team });
     configureBot({ personality_traits, team_id });
+  }
+
+  function openModal(): void {
+    setModalVisibility(true);
+  }
+
+  function closeModal(): void {
+    setModalVisibility(false);
   }
 
   return (

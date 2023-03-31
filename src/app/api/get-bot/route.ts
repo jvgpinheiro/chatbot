@@ -9,6 +9,7 @@ import {
 } from "@/data/databaseManager";
 import Chatbot from "@/server/chatbot";
 
+export type RequestParams = [["id", string]];
 export type ResponseBody = {
   available_traits: Personality;
   current_personality: Personality;

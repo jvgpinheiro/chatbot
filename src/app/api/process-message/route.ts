@@ -5,7 +5,8 @@ import Personality from "@/server/personality";
 import { getTeamByID } from "@/server/teams";
 import Chatbot from "@/server/chatbot";
 
-type RequestBody = { id: string; message: string };
+export type RequestBody = { id: string; message: string };
+export type ResponseBody = string;
 
 export async function POST(request: Request) {
   try {
@@ -58,7 +59,7 @@ function buildBot(storedData: UserConfig): Chatbot {
   return new Chatbot({ personality, team });
 }
 
-async function requestPromptToOpenAI(prompt: string): Promise<string> {
+async function requestPromptToOpenAI(prompt: string): Promise<ResponseBody> {
   const config = new Configuration({
     apiKey: apiKeys.OPEN_AI,
   });
