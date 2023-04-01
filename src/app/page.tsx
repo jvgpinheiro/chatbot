@@ -48,22 +48,10 @@ export default function Home() {
     }
 
     requestBot();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userID]);
-
-  useEffect(() => {
-    const scrollableMessagesContainerRef = document.querySelector(
-      `.${styles.messagesContent}`
-    );
-    if (scrollableMessagesContainerRef) {
-      const { scrollHeight, clientHeight } = scrollableMessagesContainerRef;
-      scrollableMessagesContainerRef.scrollTop = scrollHeight - clientHeight;
-    }
-  }, [isBotTyping]);
 
   function updateBotData(data: BotData): void {
     try {
-      console.log(data);
       const botData: BotData = {
         ...data,
         available_traits: new Personality(data.available_traits),
@@ -82,6 +70,7 @@ export default function Home() {
 
   function sendMessage(message: string): void {
     addMessage({ type: "sent", content: message });
+    setBotTyping(true);
     sendMessageToAPI({ id: userID, message })
       .then((text) => addMessage({ type: "received", content: text }))
       .catch(({ text }) => addMessage({ type: "received", content: text }))
@@ -145,7 +134,7 @@ export default function Home() {
     <main className={styles.main}>
       <CSSTransition
         in={isModalOpen}
-        timeout={200}
+        timeout={300}
         classNames={{
           appear: styles.modalTransitionAppear,
           appearActive: styles.modalTransitionAppearActive,

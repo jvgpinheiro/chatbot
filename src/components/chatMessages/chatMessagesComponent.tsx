@@ -1,4 +1,4 @@
-import React, { KeyboardEvent, MouseEvent, useState } from "react";
+import React, { KeyboardEvent, MouseEvent, useEffect, useState } from "react";
 import styles from "./chatMessages.module.css";
 import Image from "next/image";
 import { ResponseBody as BotData } from "@/app/api/get-bot/route";
@@ -19,13 +19,28 @@ export default function ChatMessagesComponent({
   message,
   onMessageSent,
 }: ComponentProps): JSX.Element {
+  const [botTypingClass, setBotTypingClass] = useState<string>();
+
+  useEffect(
+    () => setBotTypingClass(isBotTyping ? styles.botTyping : ""),
+    [isBotTyping]
+  );
+
+  useEffect(() => scrollToTheBottom(), [botData.messages, botTypingClass]);
+
+  function scrollToTheBottom() {
+    const scrollableMessagesContainerRef = document.querySelector(
+      `.${styles.messagesContent}`
+    );
+    if (scrollableMessagesContainerRef) {
+      const { scrollHeight, clientHeight } = scrollableMessagesContainerRef;
+      scrollableMessagesContainerRef.scrollTop = scrollHeight - clientHeight;
+    }
+  }
+
   return (
     <div className={styles.messagesContainer}>
-      <div
-        className={`${styles.messagesContent} ${
-          isBotTyping ? styles.botTyping : ""
-        }`}
-      >
+      <div className={`${styles.messagesContent} ${botTypingClass}`}>
         {botData.messages.map(({ type, content }, index) => {
           return (
             <div
@@ -44,11 +59,7 @@ export default function ChatMessagesComponent({
           );
         })}
       </div>
-      <div
-        className={`${styles.botTypingContainer} ${
-          isBotTyping ? "" : styles.hidden
-        }`}
-      >
+      <div className={`${styles.botTypingContainer} ${botTypingClass}`}>
         <Image
           className={styles.botIcon}
           src="/chatbot.png"

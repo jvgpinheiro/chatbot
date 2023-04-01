@@ -25,8 +25,6 @@ export default function ModalComponent({
     new Set()
   );
 
-  useEffect(() => console.log(selectedTraits), [selectedTraits]);
-
   useEffect(() => {
     const set = new Set(bot.personality.toTraitIdList());
     setSelectedTraits(set);
@@ -62,7 +60,7 @@ export default function ModalComponent({
             <span className={styles.sectionTitle}>Teams</span>
             <ModalTeamsComponent
               teams={botData.available_teams}
-              selectedTeam={botData.current_team}
+              selectedTeam={bot.team}
               onTeamChange={(team) => onTeamChange(team)}
             ></ModalTeamsComponent>
           </div>

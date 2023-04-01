@@ -3,7 +3,7 @@
     height: 100%;
     width: 100%;
     z-index: 1000;
-    display: flex;
+    display: none;
     justify-content: center;
     align-items: center;
     background-color: #e0e0e060;

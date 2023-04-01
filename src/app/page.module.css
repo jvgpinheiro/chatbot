@@ -18,30 +18,30 @@
 }
 
 .modalTransitionEnter {
+  display: flex;
   opacity: 0;
 }
 
 .modalTransitionEnterActive {
+  display: flex;
   opacity: 1;
   pointer-events: auto;
-  transition: opacity 200ms;
+  transition: opacity 300ms;
 }
 
 .modalTransitionEnterDone {
+  display: flex;
   opacity: 1;
   pointer-events: auto;
 }
 
 .modalTransitionExit {
+  display: flex;
   opacity: 1;
 }
 
 .modalTransitionExitActive {
+  display: flex;
   opacity: 0;
-  transition: opacity 200ms;
-}
-
-.modalTransitionExitDone {
-  pointer-events: none;
-  opacity: 0;
+  transition: opacity 300ms;
 }
