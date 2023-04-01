@@ -1,9 +1,9 @@
 import { Configuration, OpenAIApi } from "openai";
 import apiKeys from "@/api_keys/api_keys.json";
 import { databaseManager, Message, UserConfig } from "@/data/databaseManager";
-import Personality from "@/server/personality";
-import { getTeamByID } from "@/server/teams";
-import Chatbot from "@/server/chatbot";
+import Personality from "@/entities/personality";
+import { getTeamByID } from "@/entities/teams";
+import Chatbot from "@/entities/chatbot";
 
 export type RequestBody = { id: string; message: string };
 export type ResponseBody = string;

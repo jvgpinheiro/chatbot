@@ -7,8 +7,8 @@ import {
 import styles from "./page.module.css";
 import { useEffect, useState } from "react";
 import { CSSTransition } from "react-transition-group";
-import Personality from "@/server/personality";
-import Chatbot from "@/server/chatbot";
+import Personality from "@/entities/personality";
+import Chatbot from "@/entities/chatbot";
 import { Message } from "@/data/databaseManager";
 import ModalComponent from "@/components/modal/modalComponent";
 import ChatComponent from "@/components/chat/chatComponent";

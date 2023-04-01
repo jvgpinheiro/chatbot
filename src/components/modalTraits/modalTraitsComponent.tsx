@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import styles from "./modalTraits.module.css";
-import { Trait, TraitsEnum } from "@/server/traits";
+import { Trait, TraitsEnum } from "@/entities/traits";
 import { ResponseBody as BotData } from "@/app/api/get-bot/route";
-import Chatbot from "@/server/chatbot";
+import Chatbot from "@/entities/chatbot";
 
 type ComponentProps = {
   botData: BotData;

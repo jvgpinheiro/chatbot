@@ -1,7 +1,7 @@
 import React, { MouseEvent } from "react";
 import styles from "./chatHeader.module.css";
 import Image from "next/image";
-import Chatbot from "@/server/chatbot";
+import Chatbot from "@/entities/chatbot";
 
 type ComponentProps = {
   bot: Chatbot;

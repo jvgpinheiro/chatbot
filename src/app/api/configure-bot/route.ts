@@ -1,6 +1,6 @@
 import { databaseManager, UserConfig } from "@/data/databaseManager";
-import Personality from "@/server/personality";
-import { getTeamByID, Team } from "@/server/teams";
+import Personality from "@/entities/personality";
+import { getTeamByID, Team } from "@/entities/teams";
 
 export type ConfigurableData = {
   personality_traits: Array<string>;

@@ -1,13 +1,13 @@
-import teams, { getTeamByID, Team } from "@/server/teams";
+import teams, { getTeamByID, Team } from "@/entities/teams";
 import url from "url";
-import Personality from "@/server/personality";
+import Personality from "@/entities/personality";
 import {
   databaseManager,
   Message,
   UserBaseConfig,
   UserConfig,
 } from "@/data/databaseManager";
-import Chatbot from "@/server/chatbot";
+import Chatbot from "@/entities/chatbot";
 
 export type RequestParams = [["id", string]];
 export type ResponseBody = {

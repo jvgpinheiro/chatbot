@@ -1,12 +1,12 @@
 import React, { MouseEvent, useEffect, useState } from "react";
 import styles from "./modal.module.css";
 import { ResponseBody as BotData } from "@/app/api/get-bot/route";
-import Chatbot from "@/server/chatbot";
+import Chatbot from "@/entities/chatbot";
 import ModalTeamsComponent from "../modalTeam/modalTeamsComponent";
-import { Team } from "@/server/teams";
+import { Team } from "@/entities/teams";
 import ModalTraitsComponent from "../modalTraits/modalTraitsComponent";
-import { TraitsEnum } from "@/server/traits";
-import Personality from "@/server/personality";
+import { TraitsEnum } from "@/entities/traits";
+import Personality from "@/entities/personality";
 
 type ComponentProps = {
   botData: BotData;

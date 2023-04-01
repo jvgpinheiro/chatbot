@@ -1,7 +1,7 @@
 import React, { MouseEvent } from "react";
 import styles from "./modalTeams.module.css";
 import Image from "next/image";
-import { Team } from "@/server/teams";
+import { Team } from "@/entities/teams";
 
 type ComponentProps = {
   teams: Array<Team>;

@@ -1,7 +1,7 @@
 import React, { KeyboardEvent, MouseEvent, useState } from "react";
 import styles from "./chat.module.css";
 import { ResponseBody as BotData } from "@/app/api/get-bot/route";
-import Chatbot from "@/server/chatbot";
+import Chatbot from "@/entities/chatbot";
 import ChatHeaderComponent from "../chatHeader/chatHeaderComponent";
 import ChatMessagesComponent from "../chatMessages/chatMessagesComponent";
 import ChatInputComponent from "../chatInput/chatInputComponent";
