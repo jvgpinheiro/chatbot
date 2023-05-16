@@ -1,5 +1,4 @@
 import { Configuration, OpenAIApi } from "openai";
-import apiKeys from "@/api_keys/api_keys.json";
 import { databaseManager, Message, UserConfig } from "@/data/databaseManager";
 import Personality from "@/entities/personality";
 import { getTeamByID } from "@/entities/teams";
@@ -61,7 +60,7 @@ function buildBot(storedData: UserConfig): Chatbot {
 
 async function requestPromptToOpenAI(prompt: string): Promise<ResponseBody> {
   const config = new Configuration({
-    apiKey: apiKeys.OPEN_AI,
+    apiKey: process.env.OPEN_AI,
   });
   const openai = new OpenAIApi(config);
   const response = await openai.createCompletion({
