@@ -2,12 +2,24 @@ import teams, { getTeamByID, Team } from "@/entities/teams";
 import url from "url";
 import Personality from "@/entities/personality";
 import {
-  databaseManager,
+  addOrUpdateChatbot,
+  addUser,
+  getChatbotFromUser,
+  getMessagesFromUser,
+  getUser,
+  hasLinkedChatbot,
+  hasLinkedMessages,
+  hasUser,
   Message,
-  UserBaseConfig,
   UserConfig,
 } from "@/data/databaseManager";
 import Chatbot from "@/entities/chatbot";
+import {
+  User as PrismaUser,
+  Chatbot as PrismaChatbot,
+  Message as PrismaMessage,
+} from "@prisma/client";
+import { formatPrismaData } from "@/utils/dataFormatter";
 
 export type RequestParams = [["id", string]];
 export type ResponseBody = {
@@ -26,7 +38,7 @@ export async function GET(request: Request) {
       return new Response("Invalid bot id", { status: 400 });
     }
 
-    const data = getUserFromDB(id);
+    const data = await getUserFromDB(id);
     const json = buildResponseData(data);
     return new Response(JSON.stringify(json), { status: 200 });
   } catch (err) {
@@ -34,14 +46,12 @@ export async function GET(request: Request) {
   }
 }
 
-function getUserFromDB(id: string): UserConfig {
+async function getUserFromDB(id: string): Promise<UserConfig> {
   try {
-    !databaseManager.has(id) && createBot(id);
-    const data = databaseManager.find(id);
-    if (!data) {
-      throw new Error("create-bot: Failed to load bot resources");
-    }
-    return data;
+    const prismaUser = await getPrismaUser(id);
+    const prismaChatbot = await getPrismaChatbot(id);
+    const prismaMessages = await getPrismaMessage(id);
+    return formatPrismaData(prismaUser, prismaChatbot, prismaMessages);
   } catch (err) {
     console.error("DB error");
     const data = makeDefaultUser(id);
@@ -49,21 +59,34 @@ function getUserFromDB(id: string): UserConfig {
   }
 }
 
-function createBot(id: string): void {
-  const defaultPersonality = new Personality({
-    goodTraits: [],
-    badTraits: [],
-    neutralTraits: [],
-  });
-  const bot = new Chatbot({ personality: defaultPersonality });
-  const data: UserBaseConfig = {
-    team_id: bot.team?.id ?? "-1",
-    messages: [],
-    personality_traits: bot.personality
-      .toTraitIdList()
-      .map((trait) => trait.toString()),
-  };
-  databaseManager.add(id, data);
+async function getPrismaUser(userId: string): Promise<PrismaUser> {
+  const prismaData = (await hasUser(userId))
+    ? await getUser(userId)
+    : await addUser(userId);
+  if (!prismaData) {
+    throw new Error("create-bot: User - Failed to load bot resources");
+  }
+  return prismaData;
+}
+
+async function getPrismaChatbot(userId: string): Promise<PrismaChatbot> {
+  const prismaData = (await hasLinkedChatbot(userId))
+    ? await getChatbotFromUser(userId)
+    : await addOrUpdateChatbot(userId, new Chatbot({}));
+  if (!prismaData) {
+    throw new Error("create-bot: Chatbot - Failed to load bot resources");
+  }
+  return prismaData;
+}
+
+async function getPrismaMessage(userId: string): Promise<Array<PrismaMessage>> {
+  const prismaData = (await hasLinkedMessages(userId))
+    ? await getMessagesFromUser(userId)
+    : [];
+  if (!prismaData) {
+    throw new Error("create-bot: User - Failed to load bot resources");
+  }
+  return prismaData;
 }
 
 function makeDefaultUser(key: string): UserConfig {

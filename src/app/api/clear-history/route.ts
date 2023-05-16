@@ -1,4 +1,4 @@
-import { databaseManager } from "@/data/databaseManager";
+import { deleteMessagesFromUser, getUser } from "@/data/databaseManager";
 
 export type RequestBody = { id: string };
 export type ResponseBody = string;
@@ -21,23 +21,16 @@ function isValidRequestBody(body: any): boolean {
   return typeof body === "object" && body.id;
 }
 
-function answerRequest(body: RequestBody): Response {
-  const { error } = updateBotMessages(body.id);
-  if (error) {
-    return new Response(error, { status: 400 });
+async function answerRequest(body: RequestBody): Promise<Response> {
+  try {
+    const id = body.id;
+    const user = await getUser(id);
+    if (!user) {
+      return new Response("Invalid id. Bot not found", { status: 400 });
+    }
+    await deleteMessagesFromUser(id);
+    return new Response("History cleared with success", { status: 200 });
+  } catch (err) {
+    return new Response("Database error", { status: 500 });
   }
-  const storedData = databaseManager.find(body.id);
-  if (!storedData) {
-    return new Response("Error while updating the bot", { status: 500 });
-  }
-  return new Response("History cleared with success", { status: 200 });
-}
-
-function updateBotMessages(id: string): { success: boolean; error?: string } {
-  const storedData = databaseManager.find(id);
-  if (!storedData) {
-    return { success: false, error: "Invalid id. Bot not found" };
-  }
-  databaseManager.update(id, { ...storedData, messages: [] });
-  return { success: true };
 }

@@ -1,6 +1,17 @@
-import { databaseManager, UserConfig } from "@/data/databaseManager";
+import {
+  addOrUpdateChatbot,
+  getUser,
+  UserConfig,
+} from "@/data/databaseManager";
+import Chatbot from "@/entities/chatbot";
 import Personality from "@/entities/personality";
 import { getTeamByID, Team } from "@/entities/teams";
+import { formatPrismaData } from "@/utils/dataFormatter";
+import {
+  Chatbot as PrismaChatbot,
+  Message as PrismaMessage,
+  User as PrismaUser,
+} from "@prisma/client";
 
 export type ConfigurableData = {
   personality_traits: Array<string>;
@@ -35,29 +46,32 @@ function isValidRequestBody(body: any): boolean {
   );
 }
 
-function answerRequest(body: RequestBody): Response {
-  const { error } = updateBotConfiguration(body.id, body);
-  if (error) {
-    return new Response(error, { status: 400 });
+async function answerRequest(body: RequestBody): Promise<Response> {
+  const prismaChatbot = await updateBot(body);
+  const prismaUser = await getUser(body.id);
+  if (!prismaUser) {
+    throw Error("configure-bot: Error while updating bot");
   }
-  const storedData = databaseManager.find(body.id);
-  if (!storedData) {
-    return new Response("Error while updating the bot", { status: 500 });
-  }
-  const jsonData = buildSuccessfulResponseData(storedData);
-  return new Response(JSON.stringify(jsonData));
+  return createResponse(prismaUser, prismaChatbot, prismaUser.messages);
 }
 
-function updateBotConfiguration(
-  id: string,
-  configurableData: ConfigurableData
-): { success: boolean; error?: string } {
-  const storedData = databaseManager.find(id);
-  if (!storedData) {
-    return { success: false, error: "Invalid id. Bot not found" };
-  }
-  databaseManager.update(id, { ...storedData, ...configurableData });
-  return { success: true };
+function updateBot(body: RequestBody): Promise<PrismaChatbot> {
+  const traits = body.personality_traits.map((trait) => +trait);
+  const chatbot = new Chatbot({
+    personality: Personality.fromTraitsList(traits),
+    team: getTeamByID(body.team_id),
+  });
+  return addOrUpdateChatbot(body.id, chatbot);
+}
+
+function createResponse(
+  prismaUser: PrismaUser,
+  prismaChatbot: PrismaChatbot,
+  prismaMessage: Array<PrismaMessage>
+): Response {
+  const userConfig = formatPrismaData(prismaUser, prismaChatbot, prismaMessage);
+  const jsonData = buildSuccessfulResponseData(userConfig);
+  return new Response(JSON.stringify(jsonData));
 }
 
 function buildSuccessfulResponseData(storedData: UserConfig): ResponseBody {

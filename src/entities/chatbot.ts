@@ -2,7 +2,7 @@ import { Trait } from "./traits";
 import { Team } from "./teams";
 import Personality from "./personality";
 
-type ConstructorArgs = { personality: Readonly<Personality>; team?: Team };
+type ConstructorArgs = { personality?: Readonly<Personality>; team?: Team };
 
 export default class Chatbot {
   public personality: Readonly<Personality>;
@@ -10,7 +10,7 @@ export default class Chatbot {
   private botDescription: string;
 
   constructor({ personality, team }: ConstructorArgs) {
-    this.personality = personality;
+    this.personality = personality ?? Personality.DEFAULT_PERSONALITY;
     this.team = team;
     this.botDescription = this.getDescription();
   }

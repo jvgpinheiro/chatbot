@@ -21,6 +21,7 @@ import {
 import { getUserID } from "@/utils/localStorageUtils";
 
 export default function Home() {
+    const teste = 1 satisfies number | string;
   const initialBot = new Chatbot({
     personality: Personality.DEFAULT_PERSONALITY,
   });
@@ -42,6 +43,9 @@ export default function Home() {
 
   useEffect(() => {
     function requestBot(): void {
+      if (!userID) {
+        return;
+      }
       getBotFromAPI([["id", `${userID}`]])
         .then((data) => updateBotData(data))
         .catch((err) => console.error(err));

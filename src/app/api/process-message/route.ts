@@ -1,5 +1,5 @@
 import { Configuration, OpenAIApi } from "openai";
-import { databaseManager, Message, UserConfig } from "@/data/databaseManager";
+import { addMessage, getChatbotFromUser } from "@/data/databaseManager";
 import Personality from "@/entities/personality";
 import { getTeamByID } from "@/entities/teams";
 import Chatbot from "@/entities/chatbot";
@@ -27,34 +27,23 @@ function isValidRequestBody(body: any): boolean {
 }
 
 async function answerRequest(body: RequestBody): Promise<Response> {
-  const storedData = databaseManager.find(body.id);
-  if (!storedData) {
-    return new Response("process-message: Bot not found", { status: 400 });
-  }
-
-  storeMessage(storedData, { type: "sent", content: body.message });
-  const bot = buildBot(storedData);
+  addMessage(body.id, { type: "sent", content: body.message });
+  const bot = await buildBot(body);
   const answer = await requestPromptToOpenAI(bot.makePrompt(body.message));
-  const mostRecentData = databaseManager.find(storedData.id);
-  mostRecentData &&
-    storeMessage(mostRecentData, { type: "received", content: answer });
+  addMessage(body.id, { type: "received", content: answer });
   return new Response(answer);
 }
 
-function storeMessage(storedData: UserConfig, newMessage: Message): void {
-  const messages: Array<Message> = JSON.parse(
-    JSON.stringify(storedData.messages)
-  );
-  messages.push(newMessage);
-  databaseManager.update(storedData.id, { ...storedData, messages });
-}
-
-function buildBot(storedData: UserConfig): Chatbot {
-  const { personality_traits, team_id } = storedData;
+async function buildBot(body: RequestBody): Promise<Chatbot> {
+  const storedChatbot = await getChatbotFromUser(body.id);
+  if (!storedChatbot) {
+    throw new Error("process-message: No bot found");
+  }
+  const { personality_traits, team_id } = storedChatbot;
   const personality = Personality.fromTraitsList(
     personality_traits.map((trait) => +trait)
   );
-  const team = getTeamByID(team_id);
+  const team = team_id ? getTeamByID(team_id) : undefined;
   return new Chatbot({ personality, team });
 }
 
