@@ -15,6 +15,17 @@ import {
   ResponseBody as GetBotResponseBody,
 } from "@/app/api/get-bot/route";
 
+type Routes =
+  | "/api/get-bot"
+  | "/api/process-message"
+  | "/api/configure-bot"
+  | "/api/clear-history";
+
+function makeUrl(path: Routes): URL {
+  const { origin } = document.location;
+  return new URL(`${origin}${path}`);
+}
+
 export function sendMessageToAPI(
   body: MessageRequestBody
 ): Promise<MessageResponseBody> {
@@ -40,7 +51,7 @@ export function sendMessageToAPI(
         resolve(text);
       }
 
-      const url = new URL("http://localhost:3000/api/process-message");
+      const url = makeUrl("/api/process-message");
       const options = {
         method: "POST",
         headers: { "Content-type": "application/json" },
@@ -83,7 +94,7 @@ export function sendBotConfigurationToAPI(
         resolve(data);
       }
 
-      const url = new URL("http://localhost:3000/api/configure-bot");
+      const url = makeUrl("/api/configure-bot");
       const options = {
         method: "POST",
         headers: { "Content-type": "application/json" },
@@ -126,7 +137,7 @@ export function sendClearHistoryToAPI(
         resolve(data);
       }
 
-      const url = new URL("http://localhost:3000/api/clear-history");
+      const url = makeUrl("/api/clear-history");
       const options = {
         method: "POST",
         headers: { "Content-type": "application/json" },
@@ -167,7 +178,7 @@ export function getBotFromAPI(
         resolve(data);
       }
 
-      const url = new URL("http://localhost:3000/api/get-bot");
+      const url = makeUrl("/api/get-bot");
       url.search = new URLSearchParams(params).toString();
       const options = { method: "GET" };
       fetch(url, options)
