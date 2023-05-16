@@ -68,6 +68,7 @@ export default function Home() {
       });
       setBot(bot);
     } catch (err) {
+      //
       console.error(err);
     }
   }

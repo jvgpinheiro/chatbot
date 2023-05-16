@@ -53,7 +53,6 @@ async function getUserFromDB(id: string): Promise<UserConfig> {
     const prismaMessages = await getPrismaMessage(id);
     return formatPrismaData(prismaUser, prismaChatbot, prismaMessages);
   } catch (err) {
-    console.error("DB error");
     const data = makeDefaultUser(id);
     return data;
   }
