@@ -34,3 +34,8 @@ model Message {
   user       User     @relation(fields: [user_id], references: [id])
   user_id    String
 }
+
+model WebhookLogs {
+  id   String @id @default(uuid())
+  body Json
+}
