@@ -39,3 +39,16 @@ model WebhookLogs {
   id   String @id @default(uuid())
   body Json
 }
+
+model MessageSentStatus {
+  id             String  @id @default(uuid())
+  conversationId String?
+  phone          String?
+  customerPhone  String?
+  status         String?
+}
+
+model Errors {
+  id    String  @id @default(uuid())
+  error String?
+}
