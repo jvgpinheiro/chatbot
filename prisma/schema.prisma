@@ -36,8 +36,9 @@ model Message {
 }
 
 model WebhookLogs {
-  id   String @id @default(uuid())
-  body Json
+  id      String @id @default(uuid())
+  body    Json
+  headers Json?
 }
 
 model MessageSentStatus {

@@ -20,6 +20,7 @@ export async function POST(
           method: request.method,
           original: body,
         },
+        headers: request.headers as any,
       },
     });
     const entries = body.entry;
