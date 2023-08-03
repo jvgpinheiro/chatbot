@@ -14,15 +14,15 @@ export async function POST(
 ): Promise<Response> {
   try {
     const body = await request.json();
-    await prisma.webhookLogs.create({
-      data: {
-        body: {
-          method: request.method,
-          original: body,
-        },
-        headers: request.headers as any,
-      },
-    });
+    // await prisma.webhookLogs.create({
+    //   data: {
+    //     body: {
+    //       method: request.method,
+    //       original: body,
+    //     },
+    //     headers: request.headers as any,
+    //   },
+    // });
     const entries = body.entry;
     const promises = entries.map(async (entry: any) => {
       const id = entry.id;

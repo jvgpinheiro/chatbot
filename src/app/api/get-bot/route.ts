@@ -20,6 +20,7 @@ import {
   Message as PrismaMessage,
 } from "@prisma/client";
 import { formatPrismaData } from "@/utils/dataFormatter";
+import prisma from "../../../../lib/prisma";
 
 export type RequestParams = [["id", string]];
 export type ResponseBody = {
@@ -29,6 +30,12 @@ export type ResponseBody = {
   current_team?: Team;
   messages: Array<Message>;
 };
+
+function waitFor(time: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(() => resolve(), time);
+  });
+}
 
 export async function GET(request: Request) {
   try {
@@ -40,6 +47,13 @@ export async function GET(request: Request) {
 
     const data = await getUserFromDB(id);
     const json = buildResponseData(data);
+
+    waitFor(10000).then(() =>
+      prisma.webhookLogs.create({
+        data: { body: { content: "delayed-get-bot" } },
+      })
+    );
+
     return new Response(JSON.stringify(json), { status: 200 });
   } catch (err) {
     return new Response("Unknown error", { status: 400 });
