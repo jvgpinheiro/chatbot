@@ -19,9 +19,14 @@ import {
   sendMessageToAPI,
 } from "@/utils/apiUtils";
 import { getUserID } from "@/utils/localStorageUtils";
+import { io, Socket } from "socket.io-client";
+import {
+  ServerReceiverEvents,
+  ServerSenderEvents,
+} from "@/types/WebSocketMessageTypes";
 
 export default function Home() {
-    const teste = 1 satisfies number | string;
+  const teste = 1 satisfies number | string;
   const initialBot = new Chatbot({
     personality: Personality.DEFAULT_PERSONALITY,
   });
@@ -36,6 +41,10 @@ export default function Home() {
   const [bot, setBot] = useState<Chatbot>(new Chatbot(initialBot));
   const [isModalOpen, setModalVisibility] = useState<boolean>(false);
   const [isBotTyping, setBotTyping] = useState<boolean>(false);
+  const [socket, setSocket] = useState<Socket<
+    ServerSenderEvents,
+    ServerReceiverEvents
+  > | null>(null);
 
   useEffect(() => {
     setUserID(getUserID());
@@ -53,6 +62,12 @@ export default function Home() {
 
     requestBot();
   }, [userID]);
+
+  useEffect(() => {
+    disconnect();
+    connect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function updateBotData(data: BotData): void {
     try {
@@ -133,6 +148,31 @@ export default function Home() {
 
   function closeModal(): void {
     setModalVisibility(false);
+  }
+
+  function disconnect() {
+    socket && socket.disconnect();
+  }
+
+  function connect() {
+    fetch("http://localhost:3000/api/socket/", { method: "GET" })
+      .then((res) => {
+        if (res.status !== 200) {
+          setSocket(null);
+          return;
+        }
+        const newSocket: Socket<ServerSenderEvents, ServerReceiverEvents> =
+          io();
+        newSocket.on("connect", () => {
+          newSocket.emit("subscribe-message", { id: Math.random().toString() });
+          newSocket.on("new-message", ({ message }) => console.log(message));
+        });
+
+        setSocket(newSocket);
+      })
+      .catch(() => {
+        setSocket(null);
+      });
   }
 
   return (

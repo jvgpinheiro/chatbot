@@ -19,9 +19,10 @@ type Routes =
   | "/api/get-bot"
   | "/api/process-message"
   | "/api/configure-bot"
-  | "/api/clear-history";
+  | "/api/clear-history"
+  | "/api/socket";
 
-function makeUrl(path: Routes): URL {
+export function makeUrl(path: Routes): URL {
   const { origin } = document.location;
   return new URL(`${origin}${path}`);
 }
@@ -179,6 +180,44 @@ export function getBotFromAPI(
       }
 
       const url = makeUrl("/api/get-bot");
+      url.search = new URLSearchParams(params).toString();
+      const options = { method: "GET" };
+      fetch(url, options)
+        .then((response) => processResponse(response))
+        .then((text) => processResponseData(text))
+        .catch((err) => handleFailure(err));
+    } catch (err) {
+      handleFailure(err);
+    }
+  });
+}
+
+export function getSocketFromAPI(
+  params: GetBotRequestParams
+): Promise<GetBotResponseBody> {
+  return new Promise((resolve, reject) => {
+    function handleFailure(error: any): void {
+      reject({
+        error,
+        text: "Failed to get bot",
+      });
+    }
+
+    try {
+      function processResponse(
+        response: Response
+      ): Promise<GetBotResponseBody> {
+        if (response.status !== 200) {
+          handleFailure(new Error("Response code different than 200"));
+        }
+        return response.json();
+      }
+
+      function processResponseData(data: GetBotResponseBody): void {
+        resolve(data);
+      }
+
+      const url = makeUrl("/api/socket");
       url.search = new URLSearchParams(params).toString();
       const options = { method: "GET" };
       fetch(url, options)

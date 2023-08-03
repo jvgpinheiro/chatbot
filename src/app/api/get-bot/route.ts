@@ -30,7 +30,7 @@ export type ResponseBody = {
   messages: Array<Message>;
 };
 
-export async function GET(request: Request) {
+export async function GET(request: Request, res: any, r: any) {
   try {
     const parsedUrl = url.parse(request.url, true);
     const id = parsedUrl.query.id;
