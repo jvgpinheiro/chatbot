@@ -26,7 +26,10 @@ export default class Chatbot {
   }
 
   public makePrompt(prompt: string): string {
-    return `Assuming I don't support any club, impersonate a ${this.botDescription} and answer in the same language as asked the following prompt: "${prompt}".\n\nAlso, add at the end of your answer after 2 line breaks the following: "Tópico: Jogadores" if you're talking about players, "Tópico: Times" if you're talking about teams/clubs, "Tópico: Estádios" if you're talking about stadiums and "Tópico: Outro" for everything else`;
+    const core = `Assuming I don't support any club, impersonate a ${this.botDescription} and answer in the same language as asked the following prompt: "${prompt}".`;
+    const userMainTopic = `\n\nAlso, add at the end of your answer after 2 line breaks the following: "Tópico Principal Usuário: Jogadores" if the main topic about the given prompt is about players, "Tópico Principal Usuário: Arbitragem" if the main topic about the given prompt is about referees, "Tópico Principal Usuário: Times" if the main topic about the given prompt is about teams/clubs, "Tópico Principal Usuário: Estádios" if the main topic about the given prompt is about stadiums and "Tópico Principal Respondido: Outro" for every other main topic the user talks about`;
+    const aiMainTopic = `\n\nAlso, add at the end of your answer after 1 line break the following: "Tópico Principal Respondido: Jogadores" if the main topic about what you said is about players, "Tópico Principal Respondido: Arbitragem" if the main topic about what you said is about referees, "Tópico Principal Respondido: Times" if the main topic about what you said is about teams/clubs, "Tópico Principal Respondido: Estádios" if the main topic about what you said is about stadiums and "Tópico Principal Respondido: Outro" for everything else you said`;
+    return `${core}${userMainTopic}`;
   }
 
   public getDescription(): string {
