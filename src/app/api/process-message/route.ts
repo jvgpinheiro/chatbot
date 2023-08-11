@@ -8,6 +8,7 @@ import Personality from "@/entities/personality";
 import { getTeamByID } from "@/entities/teams";
 import Chatbot from "@/entities/chatbot";
 import { Message } from "@prisma/client";
+import prisma from "../../../../lib/prisma";
 
 type GetArrayType<T extends Array<any>> = T extends Array<infer O> ? O : never;
 export type RequestBody = { id: string; message: string };
@@ -24,7 +25,16 @@ export async function POST(request: Request) {
     }
     return await answerRequest(body);
   } catch (err) {
-    debugger;
+    await prisma.webhookLogs.create({
+      data: {
+        body: JSON.parse(
+          JSON.stringify({
+            type: "error-catch",
+            err: err instanceof Error ? err.stack : err,
+          })
+        ),
+      },
+    });
     if (body) {
       const message =
         "Sorry, I'm unable to provide an answer right now. Please try again or reload the page";
@@ -51,6 +61,11 @@ async function answerRequest(body: RequestBody): Promise<Response> {
   const bot = await buildBot(body);
   const message = body.message;
   const allMessages = await getMessagesFromUser(body.id);
+  await prisma.webhookLogs.create({
+    data: {
+      body: JSON.parse(JSON.stringify({ type: "before-openai" })),
+    },
+  });
   const answer = await requestPromptToOpenAI({ bot, message, allMessages });
   await addMessage(body.id, { type: "received", content: answer });
   return new Response(answer);
@@ -97,6 +112,16 @@ async function requestPromptToOpenAI({
     apiKey: process.env.OPEN_AI,
   });
   const openai = new OpenAIApi(config);
+  await prisma.webhookLogs.create({
+    data: {
+      body: JSON.parse(
+        JSON.stringify({
+          type: "before-request-openai",
+          prompt,
+        })
+      ),
+    },
+  });
   const response = await openai.createChatCompletion({
     model: "gpt-3.5-turbo",
     messages: [
@@ -108,6 +133,16 @@ async function requestPromptToOpenAI({
       { role: "user", content: prompt },
     ],
     temperature: 0.4,
+  });
+  await prisma.webhookLogs.create({
+    data: {
+      body: JSON.parse(
+        JSON.stringify({
+          type: "after-request-openai",
+          date: response.data,
+        })
+      ),
+    },
   });
   return response.data.choices[0].message?.content ?? "No response from API";
 }

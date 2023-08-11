@@ -31,6 +31,8 @@ export function sendMessageToAPI(
 ): Promise<MessageResponseBody> {
   return new Promise((resolve, reject) => {
     function handleFailure(error: any): void {
+      console.error(error);
+      console.trace("Handle failure");
       reject({
         error,
         text: "Sorry, I'm unable to provide an answer right now. Please try again or reload the page",
