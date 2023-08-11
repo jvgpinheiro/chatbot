@@ -47,13 +47,6 @@ export async function GET(request: Request) {
 
     const data = await getUserFromDB(id);
     const json = buildResponseData(data);
-
-    waitFor(10000).then(() =>
-      prisma.webhookLogs.create({
-        data: { body: { content: "delayed-get-bot" } },
-      })
-    );
-
     return new Response(JSON.stringify(json), { status: 200 });
   } catch (err) {
     return new Response("Unknown error", { status: 400 });

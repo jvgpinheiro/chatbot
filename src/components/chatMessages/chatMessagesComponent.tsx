@@ -52,7 +52,7 @@ export default function ChatMessagesComponent({
               key={index}
             >
               <div className={styles.message}>
-                <span className={styles.messageText}>{content}</span>
+                <p className={styles.messageText}>{content}</p>
               </div>
               <div className={styles.messageTail}></div>
             </div>

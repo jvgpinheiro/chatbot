@@ -111,7 +111,7 @@ function updateChatbot(
     },
     data: {
       personality_traits: chatbot.personality.toTraitIdList(),
-      team_id: chatbot.team?.id,
+      team_id: chatbot.team?.id ?? null,
       user_id: prismaChatbot.user_id,
     },
   });

@@ -26,7 +26,7 @@ export default class Chatbot {
   }
 
   public makePrompt(prompt: string): string {
-    return `Accept only prompts written in English and if the prompt is in another language answer "Sorry, I don't understand. I only speak English".\n\nAssuming I don't support any club, impersonate a ${this.botDescription} and answer the following prompt: "${prompt}".`;
+    return `Assuming I don't support any club, impersonate a ${this.botDescription} and answer the following prompt: "${prompt}".`;
   }
 
   public getDescription(): string {
