@@ -100,10 +100,10 @@ async function requestPromptToOpenAI({
   const response = await openai.createChatCompletion({
     model: "gpt-3.5-turbo",
     messages: [
-      ...formattedMessages,
+      ...formattedMessages.slice(-10),
       {
         role: "system",
-        content: `Impersonate a ${botDescription} assistant but don't tell the user that you're are impersonating a ${botDescription} fan and answer in the same language as the user`,
+        content: `Impersonate a ${botDescription} fan but don't tell the user that you're are impersonating a ${botDescription} fan and answer in the same language as the user.`,
       },
       { role: "user", content: prompt },
     ],

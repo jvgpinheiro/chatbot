@@ -26,7 +26,7 @@ export default class Chatbot {
   }
 
   public makePrompt(prompt: string): string {
-    return `Assuming I don't support any club, impersonate a ${this.botDescription} and answer the following prompt: "${prompt}".`;
+    return `Assuming I don't support any club, impersonate a ${this.botDescription} and answer in the same language as asked the following prompt: "${prompt}".\n\nAlso, add at the end of your answer after 2 line breaks the following: "Tópico: Jogadores" if you're talking about players, "Tópico: Times" if you're talking about teams/clubs, "Tópico: Estádios" if you're talking about stadiums and "Tópico: Outro" for everything else`;
   }
 
   public getDescription(): string {
