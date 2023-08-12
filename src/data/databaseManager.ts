@@ -117,26 +117,16 @@ function updateChatbot(
   });
 }
 
-export async function addMessage(
-  userId: string,
-  message: Message
-): Promise<PrismaMessage> {
-  const storedUser = await getUser(userId);
-  if (!storedUser) {
-    throw Error("addOrUpdateChatbot: User not found");
-  }
-  return createMessage(storedUser, message);
+export async function addMessage(userId: string, message: Message) {
+  return createMessage(userId, message);
 }
 
-function createMessage(
-  prismaUser: PrismaUser,
-  message: Message
-): Promise<PrismaMessage> {
+function createMessage(userId: string, message: Message) {
   return prisma.message.create({
     data: {
       is_sent: message.type === "sent",
       content: message.content,
-      user: { connect: { id: prismaUser.id } },
+      user: { connect: { id: userId } },
     },
   });
 }

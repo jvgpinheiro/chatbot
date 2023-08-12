@@ -1,5 +1,6 @@
 import { Configuration, CreateChatCompletionRequest, OpenAIApi } from "openai";
 import {
+  Message as FormattedMessage,
   addMessage,
   getChatbotFromUser,
   getMessagesFromUser,
@@ -9,10 +10,16 @@ import { getTeamByID } from "@/entities/teams";
 import Chatbot from "@/entities/chatbot";
 import { Message } from "@prisma/client";
 import prisma from "../../../../lib/prisma";
+import { IncomingMessage } from "http";
 
 type GetArrayType<T extends Array<any>> = T extends Array<infer O> ? O : never;
 export type RequestBody = { id: string; message: string };
 export type ResponseBody = string;
+type PromptRequestArgs = {
+  bot: Chatbot;
+  message: string;
+  allMessages: Array<Message>;
+};
 
 export async function POST(request: Request) {
   const body = await getBodySafely(request);
@@ -25,16 +32,6 @@ export async function POST(request: Request) {
     }
     return await answerRequest(body);
   } catch (err) {
-    await prisma.webhookLogs.create({
-      data: {
-        body: JSON.parse(
-          JSON.stringify({
-            type: "error-catch",
-            err: err instanceof Error ? err.stack : err,
-          })
-        ),
-      },
-    });
     if (body) {
       const message =
         "Sorry, I'm unable to provide an answer right now. Please try again or reload the page";
@@ -57,18 +54,39 @@ function isValidRequestBody(body: any): boolean {
 }
 
 async function answerRequest(body: RequestBody): Promise<Response> {
-  await addMessage(body.id, { type: "sent", content: body.message });
-  const bot = await buildBot(body);
+  const { bot, allMessages } = await readFromDB(body);
   const message = body.message;
-  const allMessages = await getMessagesFromUser(body.id);
-  await prisma.webhookLogs.create({
-    data: {
-      body: JSON.parse(JSON.stringify({ type: "before-openai" })),
-    },
-  });
   const answer = await requestPromptToOpenAI({ bot, message, allMessages });
   await addMessage(body.id, { type: "received", content: answer });
   return new Response(answer);
+}
+
+async function readFromDB(body: RequestBody) {
+  const message: FormattedMessage = {
+    type: "sent",
+    content: body.message,
+  };
+  const [_, storedChatbot, allMessages] = await prisma.$transaction([
+    prisma.message.create({
+      data: {
+        is_sent: message.type === "sent",
+        content: message.content,
+        user: { connect: { id: body.id } },
+      },
+    }),
+    getChatbotFromUser(body.id),
+    getMessagesFromUser(body.id),
+  ]);
+  if (!storedChatbot) {
+    throw new Error("process-message: No bot found");
+  }
+  const { personality_traits, team_id } = storedChatbot;
+  const personality = Personality.fromTraitsList(
+    personality_traits.map((trait) => +trait)
+  );
+  const team = team_id ? getTeamByID(team_id) : undefined;
+  const bot = new Chatbot({ personality, team });
+  return { bot, allMessages };
 }
 
 async function buildBot(body: RequestBody): Promise<Chatbot> {
@@ -84,15 +102,17 @@ async function buildBot(body: RequestBody): Promise<Chatbot> {
   return new Chatbot({ personality, team });
 }
 
-async function requestPromptToOpenAI({
-  bot,
-  message,
-  allMessages,
-}: {
-  bot: Chatbot;
-  message: string;
-  allMessages: Array<Message>;
-}): Promise<ResponseBody> {
+async function requestPromptToOpenAI(
+  args: PromptRequestArgs
+): Promise<ResponseBody> {
+  const start = Date.now();
+  const result = await defaultChatCompletion(args);
+  const end = Date.now();
+  return `${result}\n\nTempo: ${((end - start) / 1000).toFixed(2)}s`;
+}
+
+async function defaultChatCompletion(args: PromptRequestArgs): Promise<string> {
+  const { bot, message, allMessages } = args;
   const prompt = bot.makePrompt(message);
   const botDescription = bot.getDescription().trim().toLowerCase();
   type FormattedMessage = GetArrayType<CreateChatCompletionRequest["messages"]>;
@@ -112,16 +132,7 @@ async function requestPromptToOpenAI({
     apiKey: process.env.OPEN_AI,
   });
   const openai = new OpenAIApi(config);
-  await prisma.webhookLogs.create({
-    data: {
-      body: JSON.parse(
-        JSON.stringify({
-          type: "before-request-openai",
-          prompt,
-        })
-      ),
-    },
-  });
+  const start = Date.now();
   const response = await openai.createChatCompletion({
     model: "gpt-3.5-turbo",
     messages: [
@@ -134,15 +145,75 @@ async function requestPromptToOpenAI({
     ],
     temperature: 0.4,
   });
-  await prisma.webhookLogs.create({
-    data: {
-      body: JSON.parse(
-        JSON.stringify({
-          type: "after-request-openai",
-          date: response.data,
-        })
-      ),
-    },
+  const result =
+    response.data.choices[0].message?.content ?? "No response from API";
+  return `${result}`;
+}
+
+async function streamChatCompletion(args: PromptRequestArgs): Promise<string> {
+  const { bot, message, allMessages } = args;
+  const prompt = bot.makePrompt(message);
+  const botDescription = bot.getDescription().trim().toLowerCase();
+  type FormattedMessage = GetArrayType<CreateChatCompletionRequest["messages"]>;
+  const messagesSorted = allMessages.sort(
+    (a, b) => a.created_at.getTime() - b.created_at.getTime()
+  );
+  const formattedMessages: Array<FormattedMessage> = messagesSorted.map(
+    (message) => {
+      const { is_sent, content } = message;
+      return {
+        role: is_sent ? "user" : "assistant",
+        content,
+      };
+    }
+  );
+  const config = new Configuration({
+    apiKey: process.env.OPEN_AI,
   });
-  return response.data.choices[0].message?.content ?? "No response from API";
+  const openai = new OpenAIApi(config);
+  const start = Date.now();
+  const response = await openai.createChatCompletion(
+    {
+      model: "gpt-3.5-turbo",
+      messages: [
+        ...formattedMessages.slice(-10),
+        {
+          role: "system",
+          content: `Impersonate a ${botDescription} fan but don't tell the user that you're are impersonating a ${botDescription} fan and answer in the same language as the user.`,
+        },
+        { role: "user", content: prompt },
+      ],
+      temperature: 0.4,
+      stream: true,
+    },
+    { responseType: "stream" }
+  );
+  const result = await new Promise((resolve: (value: string) => void) => {
+    let result = "";
+    const message = response.data as any as IncomingMessage;
+    message.on("data", (data: Buffer) => {
+      const lines = data
+        ?.toString()
+        ?.split("\n")
+        .filter((line: string) => line.trim() !== "");
+      lines;
+      for (const line of lines) {
+        const message = line.replace(/^data: /, "");
+        if (message == "[DONE]") {
+          resolve(result);
+          break;
+        } else {
+          let token;
+          try {
+            token = JSON.parse(message)?.choices?.[0]?.delta?.content ?? "";
+          } catch (err) {
+            console.error("ERROR", err);
+          }
+          result += token;
+        }
+      }
+    });
+    setTimeout(() => resolve("Timeout limit"), 8000);
+  });
+  return `${result}`;
 }
