@@ -10,8 +10,8 @@ import { getTeamByID } from "@/entities/teams";
 import Chatbot from "@/entities/chatbot";
 import { Message } from "@prisma/client";
 import prisma from "../../../../lib/prisma";
-import { IncomingMessage } from "http";
 
+type MessageToOpenAI = GetArrayType<CreateChatCompletionRequest["messages"]>;
 type GetArrayType<T extends Array<any>> = T extends Array<infer O> ? O : never;
 export type RequestBody = { id: string; message: string };
 export type ResponseBody = string;
@@ -54,14 +54,17 @@ function isValidRequestBody(body: any): boolean {
 }
 
 async function answerRequest(body: RequestBody): Promise<Response> {
-  const { bot, allMessages } = await readFromDB(body);
+  const { bot, allMessages } = await interactWithDB(body);
   const message = body.message;
+  if (allMessages.length < 3) {
+    return new Response("");
+  }
   const answer = await requestPromptToOpenAI({ bot, message, allMessages });
   await addMessage(body.id, { type: "received", content: answer });
   return new Response(answer);
 }
 
-async function readFromDB(body: RequestBody) {
+async function interactWithDB(body: RequestBody) {
   const message: FormattedMessage = {
     type: "sent",
     content: body.message,
@@ -89,37 +92,31 @@ async function readFromDB(body: RequestBody) {
   return { bot, allMessages };
 }
 
-async function buildBot(body: RequestBody): Promise<Chatbot> {
-  const storedChatbot = await getChatbotFromUser(body.id);
-  if (!storedChatbot) {
-    throw new Error("process-message: No bot found");
-  }
-  const { personality_traits, team_id } = storedChatbot;
-  const personality = Personality.fromTraitsList(
-    personality_traits.map((trait) => +trait)
-  );
-  const team = team_id ? getTeamByID(team_id) : undefined;
-  return new Chatbot({ personality, team });
-}
-
 async function requestPromptToOpenAI(
   args: PromptRequestArgs
 ): Promise<ResponseBody> {
   const start = Date.now();
-  const result = await defaultChatCompletion(args);
+  const reason = await reasonDetection(args);
+  const result = await chatCompletion(args);
   const end = Date.now();
-  return `${result}\n\nTempo: ${((end - start) / 1000).toFixed(2)}s`;
+  const timeSpent = `${((end - start) / 1000).toFixed(2)}s`;
+  return `${result}\n\n${reason}\n\nTempo: ${timeSpent}`;
 }
 
-async function defaultChatCompletion(args: PromptRequestArgs): Promise<string> {
-  const { bot, message, allMessages } = args;
-  const prompt = bot.makePrompt(message);
-  const botDescription = bot.getDescription().trim().toLowerCase();
-  type FormattedMessage = GetArrayType<CreateChatCompletionRequest["messages"]>;
+async function reasonDetection(args: PromptRequestArgs): Promise<string> {
+  const { bot, allMessages } = args;
+  const userMessages: Array<string> = [];
+  for (const message of allMessages) {
+    if (!message.is_sent) {
+      break;
+    }
+    userMessages.push(message.content);
+  }
+  const prompt = bot.makeReasonDetectionPrompt(userMessages);
   const messagesSorted = allMessages.sort(
     (a, b) => a.created_at.getTime() - b.created_at.getTime()
   );
-  const formattedMessages: Array<FormattedMessage> = messagesSorted.map(
+  const formattedMessages: Array<MessageToOpenAI> = messagesSorted.map(
     (message) => {
       const { is_sent, content } = message;
       return {
@@ -132,7 +129,42 @@ async function defaultChatCompletion(args: PromptRequestArgs): Promise<string> {
     apiKey: process.env.OPEN_AI,
   });
   const openai = new OpenAIApi(config);
-  const start = Date.now();
+  const response = await openai.createChatCompletion({
+    model: "gpt-3.5-turbo",
+    messages: [
+      ...formattedMessages.slice(-10),
+      {
+        role: "system",
+        content: `Provide the reason for the last couple of unanswered messages from the user`,
+      },
+      { role: "user", content: prompt },
+    ],
+  });
+  const result =
+    response.data.choices[0].message?.content ?? "No response from API";
+  return `${result}`;
+}
+
+async function chatCompletion(args: PromptRequestArgs): Promise<string> {
+  const { bot, message, allMessages } = args;
+  const prompt = bot.makePrompt(message);
+  const botDescription = bot.getDescription().trim().toLowerCase();
+  const messagesSorted = allMessages.sort(
+    (a, b) => a.created_at.getTime() - b.created_at.getTime()
+  );
+  const formattedMessages: Array<MessageToOpenAI> = messagesSorted.map(
+    (message) => {
+      const { is_sent, content } = message;
+      return {
+        role: is_sent ? "user" : "assistant",
+        content,
+      };
+    }
+  );
+  const config = new Configuration({
+    apiKey: process.env.OPEN_AI,
+  });
+  const openai = new OpenAIApi(config);
   const response = await openai.createChatCompletion({
     model: "gpt-3.5-turbo",
     messages: [
@@ -147,73 +179,5 @@ async function defaultChatCompletion(args: PromptRequestArgs): Promise<string> {
   });
   const result =
     response.data.choices[0].message?.content ?? "No response from API";
-  return `${result}`;
-}
-
-async function streamChatCompletion(args: PromptRequestArgs): Promise<string> {
-  const { bot, message, allMessages } = args;
-  const prompt = bot.makePrompt(message);
-  const botDescription = bot.getDescription().trim().toLowerCase();
-  type FormattedMessage = GetArrayType<CreateChatCompletionRequest["messages"]>;
-  const messagesSorted = allMessages.sort(
-    (a, b) => a.created_at.getTime() - b.created_at.getTime()
-  );
-  const formattedMessages: Array<FormattedMessage> = messagesSorted.map(
-    (message) => {
-      const { is_sent, content } = message;
-      return {
-        role: is_sent ? "user" : "assistant",
-        content,
-      };
-    }
-  );
-  const config = new Configuration({
-    apiKey: process.env.OPEN_AI,
-  });
-  const openai = new OpenAIApi(config);
-  const start = Date.now();
-  const response = await openai.createChatCompletion(
-    {
-      model: "gpt-3.5-turbo",
-      messages: [
-        ...formattedMessages.slice(-10),
-        {
-          role: "system",
-          content: `Impersonate a ${botDescription} fan but don't tell the user that you're are impersonating a ${botDescription} fan and answer in the same language as the user.`,
-        },
-        { role: "user", content: prompt },
-      ],
-      temperature: 0.4,
-      stream: true,
-    },
-    { responseType: "stream" }
-  );
-  const result = await new Promise((resolve: (value: string) => void) => {
-    let result = "";
-    const message = response.data as any as IncomingMessage;
-    message.on("data", (data: Buffer) => {
-      const lines = data
-        ?.toString()
-        ?.split("\n")
-        .filter((line: string) => line.trim() !== "");
-      lines;
-      for (const line of lines) {
-        const message = line.replace(/^data: /, "");
-        if (message == "[DONE]") {
-          resolve(result);
-          break;
-        } else {
-          let token;
-          try {
-            token = JSON.parse(message)?.choices?.[0]?.delta?.content ?? "";
-          } catch (err) {
-            console.error("ERROR", err);
-          }
-          result += token;
-        }
-      }
-    });
-    setTimeout(() => resolve("Timeout limit"), 8000);
-  });
   return `${result}`;
 }

@@ -25,9 +25,25 @@ export default class Chatbot {
     this.botDescription = this.getDescription();
   }
 
+  public makeReasonDetectionPrompt(messages: Array<string>): string {
+    const matchesReasonDetection = `"Reason: partidas" if the context messages are about partidas`;
+    const teamsReasonDetection = `"Reason: teams" if the context messages are about teams/clubs`;
+    const playersReasonDetection = `"Reason: jogadores" if the context messages are about jogadores`;
+    const refereesReasonDetection = `"Reason: arbitragem" if the context messages are about arbitragem`;
+    const stadiumsReasonDetection = `"Reason: stadiums" if the context messages are about stadiums`;
+    const otherReasonDetection = `"Reason: other" if the context messages are about any other topic`;
+
+    const reasonsList = `\n\n-${matchesReasonDetection}\n\n${playersReasonDetection}\n\n-${refereesReasonDetection}\n\n-${teamsReasonDetection}\n\n-${stadiumsReasonDetection}\n\n-${otherReasonDetection}`;
+    const contextMessages = messages.map((str) => `\n\n-${str}`);
+
+    const previousMessages = `Context messages in order:${contextMessages}`;
+    const core = `Answer with ONLY the reason for the context messages:${reasonsList}`;
+    return `${previousMessages}${core}`;
+  }
+
   public makePrompt(prompt: string): string {
     const core = `Assuming I don't support any club, impersonate a ${this.botDescription} and answer in the same language as asked the following prompt: "${prompt}".`;
-    const userMainTopic = `\n\nAlso, add at the end of your answer after 2 line breaks the following: "Tópico Principal Usuário: Jogadores" if the main topic about the given prompt is about players, "Tópico Principal Usuário: Arbitragem" if the main topic about the given prompt is about referees, "Tópico Principal Usuário: Times" if the main topic about the given prompt is about teams/clubs, "Tópico Principal Usuário: Estádios" if the main topic about the given prompt is about stadiums and "Tópico Principal Respondido: Outro" for every other main topic the user talks about`;
+    const userMainTopic = `\n\nAlso, add at the end of your answer after 2 line breaks the following: "Tópico resposta: Jogadores" if the main topic about the given prompt is about players, "Tópico resposta: Arbitragem" if the main topic about the given prompt is about referees, "Tópico resposta: Times" if the main topic about the given prompt is about teams/clubs, "Tópico resposta: Estádios" if the main topic about the given prompt is about stadiums and "Tópico Principal Respondido: Outro" for every other main topic the user talks about`;
     const aiMainTopic = `\n\nAlso, add at the end of your answer after 1 line break the following: "Tópico Principal Respondido: Jogadores" if the main topic about what you said is about players, "Tópico Principal Respondido: Arbitragem" if the main topic about what you said is about referees, "Tópico Principal Respondido: Times" if the main topic about what you said is about teams/clubs, "Tópico Principal Respondido: Estádios" if the main topic about what you said is about stadiums and "Tópico Principal Respondido: Outro" for everything else you said`;
     return `${core}${userMainTopic}`;
   }

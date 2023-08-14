@@ -21,7 +21,7 @@ import {
 import { getUserID } from "@/utils/localStorageUtils";
 
 export default function Home() {
-    const teste = 1 satisfies number | string;
+  const teste = 1 satisfies number | string;
   const initialBot = new Chatbot({
     personality: Personality.DEFAULT_PERSONALITY,
   });
@@ -77,8 +77,10 @@ export default function Home() {
     addMessage({ type: "sent", content: message });
     setBotTyping(true);
     sendMessageToAPI({ id: userID, message })
-      .then((text) => addMessage({ type: "received", content: text }))
-      .catch(({ text }) => addMessage({ type: "received", content: text }))
+      .then((text) => text && addMessage({ type: "received", content: text }))
+      .catch(
+        ({ text }) => text && addMessage({ type: "received", content: text })
+      )
       .finally(() => setBotTyping(false));
   }
 
