@@ -106,13 +106,14 @@ async function requestPromptToOpenAI(
 async function reasonDetection(args: PromptRequestArgs): Promise<string> {
   const { bot, allMessages } = args;
   const userMessages: Array<string> = [];
-  for (const message of allMessages) {
+  const invertedMessages = [...allMessages].reverse();
+  for (const message of invertedMessages) {
     if (!message.is_sent) {
       break;
     }
     userMessages.push(message.content);
   }
-  const prompt = bot.makeReasonDetectionPrompt(userMessages);
+  const prompt = bot.makeReasonDetectionPrompt(userMessages.reverse());
   const messagesSorted = allMessages.sort(
     (a, b) => a.created_at.getTime() - b.created_at.getTime()
   );

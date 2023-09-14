@@ -26,18 +26,19 @@ export default class Chatbot {
   }
 
   public makeReasonDetectionPrompt(messages: Array<string>): string {
-    const matchesReasonDetection = `"Reason: partidas" if the context messages are about partidas`;
-    const teamsReasonDetection = `"Reason: teams" if the context messages are about teams/clubs`;
-    const playersReasonDetection = `"Reason: jogadores" if the context messages are about jogadores`;
-    const refereesReasonDetection = `"Reason: arbitragem" if the context messages are about arbitragem`;
-    const stadiumsReasonDetection = `"Reason: stadiums" if the context messages are about stadiums`;
-    const otherReasonDetection = `"Reason: other" if the context messages are about any other topic`;
+    const greetingsReasonDetection = `Add "Reason: cumprimento" into the answer if there's at least one context message that is about greetings`;
+    const matchesReasonDetection = `Add "Reason: partidas" into the answer if there's at least one context message that is about matches`;
+    const teamsReasonDetection = `Add "Reason: teams" into the answer if there's at least one context message that is about teams/clubs`;
+    const playersReasonDetection = `Add "Reason: jogadores" into the answer if there's at least one context message that is about players`;
+    const refereesReasonDetection = `Add "Reason: arbitragem" into the answer if there's at least one context message that is about referees`;
+    const stadiumsReasonDetection = `Add "Reason: estádios" into the answer if there's at least one context message that is about stadiums`;
+    const otherReasonDetection = `Add "Reason: other" into the answer if there's at least one context message that is about any other topic`;
 
-    const reasonsList = `\n\n-${matchesReasonDetection}\n\n${playersReasonDetection}\n\n-${refereesReasonDetection}\n\n-${teamsReasonDetection}\n\n-${stadiumsReasonDetection}\n\n-${otherReasonDetection}`;
+    const reasonsList = `\n\n-${greetingsReasonDetection}\n\n-${matchesReasonDetection}\n\n${playersReasonDetection}\n\n-${refereesReasonDetection}\n\n-${teamsReasonDetection}\n\n-${stadiumsReasonDetection}\n\n-${otherReasonDetection}`;
     const contextMessages = messages.map((str) => `\n\n-${str}`);
 
     const previousMessages = `Context messages in order:${contextMessages}`;
-    const core = `Answer with ONLY the reason for the context messages:${reasonsList}`;
+    const core = `For the given reasons list bellow answer which reasons applies for the given context messages above:${reasonsList}`;
     return `${previousMessages}${core}`;
   }
 
